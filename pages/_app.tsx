@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'styled-components';
 
-import { THEME } from '../constants';
+import { THEME } from '../colors';
 import { trackPageview } from '../lib/analytics.helpers';
 
 import { ConfigProvider } from '../components/ConfigContext/ConfigContext';

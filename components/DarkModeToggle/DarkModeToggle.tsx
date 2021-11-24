@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { useSpring, useTrail, animated } from 'react-spring';
 
-import { BREAKPOINTS } from '../../constants';
+import { BREAKPOINTS } from '../../colors';
 import usePrefersReducedMotion from '../../hooks/use-prefers-reduced-motion';
 
 import UnstyledButton from '../UnstyledButton/UnstyledButton';

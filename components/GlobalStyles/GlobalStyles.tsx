@@ -3,7 +3,7 @@ import { createGlobalStyle } from 'styled-components';
 
 import {
   COLOR_SWAP_TRANSITION_DURATION,
-} from '../../constants';
+} from '../../colors';
 
 const GlobalStyles = createGlobalStyle`
   /* CSS RESET */

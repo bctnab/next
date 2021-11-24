@@ -1,3 +1,5 @@
+export const UNIT = 8;
+
 export const LIGHT_COLORS: {
   [key: string]: any
 } = {
@@ -90,6 +92,11 @@ export const SPRINGS = {
 };
 
 // This key is used in localStorage to remember theme preferences
+export const THEME = {
+  unit: UNIT,
+  breakpoints: BREAKPOINTS,
+};
+
 export const PREFERS_DARK_KEY = 'prefers-dark';
 export const PREFERS_DARK_CSS_PROP = `--${PREFERS_DARK_KEY}`;
 export const COLOR_SWAP_TRANSITION_DURATION = 350;
