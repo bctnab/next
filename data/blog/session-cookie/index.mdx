@@ -1,0 +1,28 @@
+---
+title: Session 和 Cookie
+categorie: 技术向
+date: 2021-11-10 11:22:15
+slub: session-cookie
+abstract: 由于 http 是一种无状态的协议，所以服务端为了区分每次进行会话的用户，就需要用某种机制来识具体的用户，这个机制就是 Session。
+isPublished: true
+isPopular: true
+tags:
+  - HTTP
+---
+
+## Session
+Session 是个非常抽象概念，开发者为了将一个个分离的 http 请求关联起来，便于服务端分析和记录，进而衍生出 Session 的概念。
+而为了区分每个用户 Session 的技术，便称之为 Session实现。比如：
+- Cookie 中存储一个 Session ID 字段，服务器端保存会话信息，当服务端接收到请求后，根据前端传递的值在服务端查询回话相关信息，如果没有重新创建，这是 Tomcat 的实现方法。
+- 将关键信息通过指定算法加密，将加密后的数据都保存到 Cookie 中，每次请求来了，直接从 Cookie 里提取数据，并根据防伪签名解密，这是 JWT 的实现方法。
+- 在 Cookie 中存放个 token(唯一标识)，状态不存在中间件里，而是存在 Redis 里，这也是一种 Session 实现方法。
+
+上面这样技术都可以称之为 Session实现，所以请 **一定不要混淆 `session` 和 `session实现`**。
+我看到过一个很恰当的比喻：**只要人们还出行，交通工具就不可缺失，只是实现的方法从走路，变成了马车，在变成汽车、火车、飞机等，将来还可能火箭等。**
+session 就像 "交通工具" 工具，其只是一个概念，没有什么特定的形式，而 session实现 可以是走路、汽车、火车等。
+
+## Cookie
+与 Session 这种抽象的概念对应的便是 Cookie，Cookie 是一个实际存在的数据，保存在浏览器内存中，每次 http 协议浏览器都会自动拼接到 header 字段中，我们可以将其理解为 Session 的一种实现方式。
+
+## 结尾
+所以结合上面的概念所以 cookie 和 session，你可以认为是同一层次的概念，也可以认为是不同层次的概念。在具体实现中 session 因为 session id 的存在，通常要借助 cookie 实现，但这并非必要，只能说是通用性较好的一种实现方案。

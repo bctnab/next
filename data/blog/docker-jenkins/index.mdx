@@ -1,0 +1,75 @@
+---
+title: Docker 安装 Jenkins
+categorie: 技术向
+date: 2021-11-11 05:22:15
+slub: docker-jenkins
+abstract: Jenkins 是一款开源自动化服务器，提供了数百个插件来支持任何项目的构建、部署和自动化，可以让项目持续集成变成可能。
+isPublished: true
+tags:
+  - Docker
+---
+
+## 安装
+使用 `docker` 可以十分方便的构建管理我们的项目，Jenkins 官方文档中推荐使用 `jenkinsci/blueocean` 镜像，我们使用 `docker pull` 命令进行拉取镜像：
+```
+docker pull jenkinsci/blueocean
+```
+下载完成后，可以查看 docker 所有镜像，看其是否存在：
+```
+$ docker images
+REPOSITORY            TAG                 IMAGE ID            CREATED             SIZE
+jenkinsci/blueocean   latest              ffd223ae2d7b        11 hours ago        603MB
+...
+```
+
+## 运行
+既然镜像都已经下载完成了，我们可以根据镜像运行 Jenkins 容器了，首先我们在宿主机上创建一个数据卷 `jenkins-data` 用于之后的数据持久化，防止数据因容器重启造成数据丢失，执行下面命令运行容器：
+```
+docker run \
+  --name jenkins-blueocean \
+  -d \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins-data:/var/jenkins_home \
+  jenkinsci/blueocean
+```
+这样 `8080` 端口用来公开访问 Web 界面，`50000` 端口允许访问远程 Java (JIRA) API。
+
+之后通过 `docker ps` 命令确认容器是否已经后台运行：
+```
+$ docker ps
+CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                                              NAMES
+2b89a114fe97        jenkinsci/blueocean   "/sbin/tini -- /usr/…"   About an hour ago   Up About an hour    0.0.0.0:8080->8080/tcp, 0.0.0.0:50000->50000/tcp   jenkins-blueocean
+```
+如果错误，可以使用：
+```
+docker logs 2b89a114fe97
+```
+查看容器运行的日志，分析错误。
+
+## 配置 Jenkins
+当一切运行正常之后，可以直接使用 `http://ip:8080` 进行访问 Jenkins 的 Web 界面。
+
+**Step1：解锁 Jenkins。**
+
+![](https://img.bplink66.com/2021/11/10/umze4157ux.png)
+
+我们进入容器中查看 `/var/jenkins_home/secrets/initialAdminPassword` 文件中的内容：
+```
+$ docker exec -it 2b89a114fe97 /bin/bash
+jenkins@2b89a114fe97:/$ cat /var/jenkins_home/secrets/initialAdminPassword
+a6f6d08fcc4741756733001d1fc79be62
+```
+将内容粘贴进去即可初始化。
+
+**Step2：安装插件。**
+
+![](https://img.bplink66.com/2021/11/10/20dxr7zr9c1.png)
+
+Jenkins 可以说完全由插件来驱动的，所以安装一些基础的插件是非要必要的，这里我们选择 安装推荐的插件 ，然后静静地等待插件安装完成即可。
+
+**Step3：创建用户。**
+
+![](https://img.bplink66.com/2021/11/10/pe5e3vgz4.png)
+
+根据自己需求添加配置即可。之后就可以看到首页界面，Jenkins 初始化配置过程也就完成了。之后就可以正式开启你的 持续集成&持续部署 之旅！

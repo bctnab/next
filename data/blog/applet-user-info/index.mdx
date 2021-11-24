@@ -1,0 +1,95 @@
+---
+title: 小程序获取登录用户信息
+categorie: 技术向
+date: 2021-08-27 23:47:42
+slub: applet
+abstract: 微信小程序可以通过官方提供的登录能力方便地获取微信提供的用户身份标识，快速建立小程序内的用户体系。
+isPublished: true
+tags:
+  - 小程序
+---
+
+## 流程
+我们梳理官方提供的流程图如下：
+
+![](https://img.bplink66.com/2021/11/05/1rmgind2mj2.jpg)
+
+主要分为下面几个步骤：
+- 先调用 `wx.login` 方法，获取到临时登陆的凭证code。
+- 然后通过 `wx.request`，将获取到的 code 传递到我们的后台服务。
+- 后台服务通过 [auth.code2Session](https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/login/auth.code2Session.html) 方式，将 **appid** + **secret** + **code** 一并传入即可。
+- 后台在请求成功后，可以获取到 *session_key* 和 *openId* 等关键信息；其中 *session_key* 是微信服务器根据用户数据进行加密签名的密钥，我们只能保存在服务端，不能将其回传至客户端，主要为了防止用户敏感数据丢失。*openId* 为小程序用户的唯一标识，该标识是确定的，不会进行改变。
+- 后台通过 Token 或者 Session 方式进行存储，并返回前端一个用户凭证 token。
+- 前端通过对 token 进行存储，并且每次请求都带上这些字段。
+- 后台服务每次都验证 token 的安全性，判断是否登陆过，或者是否被篡改，并做出相关的反应，并返回给前端。
+
+## 获取 openID
+通过小程序提供的 `wx.login` 方法，获取小程序的登陆凭证 code，传递给服务端并在服务端与微信接口服务换取到 openid、unionid、session_key 等字段信息。
+### wx.login
+我们可以在任何一个逻辑代码中调用此方法：
+```javascript
+/**
+* 获取用户唯一凭证
+*/
+login: function() {
+  wx.login({
+    success: function(data) {
+      console.log('获取登录 Code：' + data.code);
+    },
+    fail: function() {
+      console('登录获取Code失败！');
+    }
+  });
+}
+```
+当获取到用户登录凭证后，就可以服务端使用 code 换取 openid、unionid、session_key 等信息了，而不再前段换取主要为了防止敏感数据被抓包。
+
+### service
+服务端接收前端传递过来的登陆凭证code，然后通过 [auth.code2Session](https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/login/auth.code2Session.html) 方式获取关键信息。
+比如我通过 Node 中的 `https` 模块进行换取：
+```javascript
+https.get(`https://api.weixin.qq.com/sns/jscode2session?appid=${ appid}&secret=${ secret}&js_code=${ code}&grant_type=${ grant_type}`, function (res) {
+  let body = "";
+
+  res.setEncoding("utf8");
+  res.on('data', function (d) {
+    body = body + d;
+  });
+
+  res.on("end", () => {
+    body = JSON.parse(body);
+    if(body.errcode === 0 || body.errcode === undefined){
+      console.log(body);
+    }else{
+      throw new Error(body.errmsg);
+    }
+  });
+});
+```
+当换取数据成功后，就可以获取到 **session_key** 与 **openid** 字段；其中 session_key 为签名密钥，我们不能将其返回给前端，只能保存到后端，以防泄露。而 openid 则是用户在该小程序中的唯一标识(每个用户在不同的小程序中会有这不同的 openid)，我们可以使用此字段和我们的项目进行关联。
+
+## 用户信息
+小程序可以通过各种前端接口获取微信提供的开放数据，获取微信提供的开放数据(只有基础信息，不含有任何敏感信息)，例如使用一个简单的 `Button` 组件，设置 `open-type` 属性，使用 `bindgetuserinfo` 绑定获取用户信息方法：
+```javascript
+// button.wxml
+<button open-type="getUserInfo" lang="zh_CN" bindgetuserinfo="userLogin">获取用户信息</button>
+
+// button.js
+userLogin: function(e){
+  console.log(e.detail);
+}
+```
+新版本也可以使用 `wx.getUserInfo` 方法直接来获取，其作用是相同的。
+
+### 数据校验
+虽然我们可以通过这些方式获取到用户信息，但为了数据安全性，微信会对开放数据做签名和加密处理。开发者后台拿到开放数据后可以对数据进行校验签名和解密，依次来保证数据不被篡改。
+
+![](https://img.bplink66.com/2021/11/05/2pw0kku4vmc.jpg)
+
+签名校验以及数据加解密涉及用户的会话密钥 session_key。 需先通过 `wx.login` 登录流程获取会话密钥 session_key 并保存在服务器。
+1. 通过 `wx.getUserInfo` 或者 `Button` 获取数据，数据中会包含 rawData、signature 字段，其中 signature = sha1(rawData + session_key)。
+2. 开发者需要把 signature、rawData 传递给服务器进行验证，服务器通过 session_key 经过相同的加密方法，得出一个新的计算签名，我们将其命名为 signature2，最后对比 signature 与 signature2 即可验证数据的完整性。
+
+## 参考
+- [小程序登录](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/login.html)
+- [开放数据校验与解密](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/signature.html)

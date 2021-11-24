@@ -1,0 +1,64 @@
+---
+title: Docker 安装 Gitea
+categorie: 技术向
+date: 2021-11-10 11:22:15
+slub: docker-gitea
+abstract: Gitea 是一款由 Go 语言编写的社区管理的轻量级代码托管解决方案，目的是采用最简单、最快、最轻松的方式来设置自托管 Git 服务。
+isPublished: true
+tags:
+  - Docker
+---
+
+## 安装
+使用 `docker-compose` 可以非常方便安装程序和程序相关插件，如果没有安装 docker 可以先安装这些插件。
+安装完成之后新增 `docker-compose.yml` 文件：
+```yml
+version: "3"
+networks:
+  gitea_net:
+    name: gitea_net
+    external: false
+services:
+  server:
+    image: gitea/gitea:latest
+    container_name: gitea
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      DB_TYPE: mysql
+      DB_HOST: db:3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWD: ${MYSQL_PASSWORD}
+    networks:
+      - gitea_net
+    restart: always
+    volumes:
+      - ./gitea:/data
+    ports:
+      - "3222:3000"
+      - "222:22"
+    depends_on:
+      - db
+  db:
+    image: mysql:5.7.27
+    container_name: gitea-mysql
+    restart: always
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - gitea_net
+    volumes:
+      - ./mysql:/var/lib/mysql
+```
+这样便已 mysql 的方式启动 Gitea，下面添加一个配置文件 `.env` 写入详细的配置信息：
+```env
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+MYSQL_DATABASE=gitea
+MYSQL_ROOT_PASSWORD=root-password
+```
+之后执行 `docker-compose --env-file .env up -d` 安装镜像，并运行容器。如果出现错误使用 `docker logs pid` 查看日志，安装成功后访问 http://ip:3222 添加一些配置，即可正常使用。

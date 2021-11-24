@@ -1,0 +1,65 @@
+---
+title: Docker 安装 Bitwarden
+categorie: 技术向
+date: 2021-11-07 12:10:10
+slub: docker-bitwarden
+abstract: Bitwarden 是一个免费的开源密码管理器，可将网站凭据等敏感信息存储在加密的保险库中，并可以为网站根据自定义规则生成随机密码。
+isPublished: true
+tags:
+  - Docker
+---
+
+## 安装
+Bitwarden 我们提供了各种平台的安装程序，包括浏览器、服务器、桌面等，具体可以看其 [github仓库](https://github.com/bitwarden)。
+
+使用 `docker-compose` 可以非常方便安装程序和程序相关插件，如果没有安装 docker 可以先安装这些插件。
+
+安装完成之后新增 `docker-compose.yml` 文件：
+```yml
+# docker-compose.yml
+version: '3'
+
+services:
+  bitwarden:
+    image: bitwardenrs/server
+    restart: always
+    ports:
+      - 8000:80
+    volumes:
+      - ./bw-data:/data
+    environment:
+      WEBSOCKET_ENABLED: 'true' # Required to use websockets
+      SIGNUPS_ALLOWED: 'true'   # set to false to disable signups
+```
+之后执行 `docker-compose up` 便能根据配置成功下载镜像，并运行容器。之后通过 `docker ps` 查看所有运行中的容器，当然如果出现错误使用 `docker logs pid` 查看运行日志，运行成功之后访问 http://ip:8000 即可正常访问。
+
+使用 docker 管理 bitwardenrs 镜像它更快、更可靠，并且它是完全开源的，并且使用率很高。
+
+## 关闭注册
+运行成功后为了密码的安全性，我们也可以将 `SIGNUPS_ALLOWED` 修改为 false，禁止匿名用户注册：
+```yml
+# docker-compose.yml
+version: '3'
+
+services:
+  bitwarden:
+    image: bitwardenrs/server
+    restart: always
+    ports:
+      - 8000:80
+    volumes:
+      - ./bw-data:/data
+    environment:
+      WEBSOCKET_ENABLED: 'true' # Required to use websockets
+      SIGNUPS_ALLOWED: 'false'   # set to false to disable signups
+```
+修改完成后，我们需要重启正在运行的 docker 镜像：
+```
+docker-compose down
+docker-compose up -d
+```
+之后我们在进行注册，会出现下面错误：
+
+![](https://img.bplink66.com/2021/11/10/263j3ijmsv7.png)
+
+这样注册功能便已经禁用了，项目可以更安全的保护存储的密码等私密信息。

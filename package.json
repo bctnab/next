@@ -1,0 +1,39 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "license": "ISC",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "start": "next start",
+    "lint": "next lint",
+    "build:rss": "tsc ./build-helpers/generate-rss-feed.ts"
+  },
+  "dependencies": {
+    "@tippyjs/react": "^4.2.5",
+    "focus-visible": "^5.2.0",
+    "lodash": "^4.17.21",
+    "next": "^12.0.3",
+    "next-mdx-remote": "^3.0.8",
+    "preact": "^10.5.15",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-feather": "^2.0.9",
+    "react-live": "^2.3.0",
+    "react-spring": "^9.3.0",
+    "styled-components": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.34",
+    "babel-plugin-styled-components": "^1.13.3",
+    "gray-matter": "^4.0.3",
+    "prettier": "^2.4.1",
+    "typescript": "^4.4.4"
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "none"
+  }
+}

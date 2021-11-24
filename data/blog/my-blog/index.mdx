@@ -1,0 +1,119 @@
+---
+title: 我的博客的建立
+categorie: 创作集
+date: 2021-11-17 09:19:15
+slub: my-blog
+preview: https://img.bplink66.com/2021/11/24/4g3bi5do62.png
+abstract: 了解这篇博客背后的技术堆栈，我们将明白 Next.js 界面的渲染，以及如何使用 MDX 解析 Markdown 内容，并在文章中添加自定义组件，以及我如何组织我的代码库等等。
+isPublished: true
+isPopular: true
+tags:
+  - Next
+---
+如果您一直在考虑为自己创建一个开发博客，那么您可能已经被工具和技术的数量所淹没。我们生活在一个富足的时代，技术上有很多选择。
+
+![](https://img.bplink66.com/2021/11/24/4g3bi5do62.png)
+
+当我们建立自己的博客时，我的首要任务是找到一个解决方案，让我们在每篇文章中可以嵌入完全自定义的内容，如何将我们自定义组件通过 Markdown 的方式渲染。
+
+下面简单分析出我的博客的工作原理，以便您可以为自己构建类似的内容。当然，博客当前正在改善，这也不是一个教程，但它应该为您提供一个广泛的路线图。
+
+## 开始
+首先博客是一个基于 [Next.js](https://nextjs.org/) 框架的应用程序。
+
+使用 Next，在界面构建方面有多种不同的选择，您可以选择每次请求时、或者静态站点生成时进行。为了获得更好的体验我选择在站点生成时提前构建所有博客文章。
+
+在部署方面使用了由开发 Next.js 相同的公司，开发出来的 [Vercel](https://vercel.com/dashboard)，一方面是因为其是同一个公司的产品，我认为它会得到很好的优化。并且在部署方面该平台也很棒。
+
+在样式方面，主要使用的是 [styled-components](https://styled-components.com/)，并从头开始编写所有样式。我不使用任何的像 antd、Bootstrap “装饰性”库是由于我并不想要网站有着特定的网站风格，与其千篇一律的保持一种风格不如我们根据自己的需求去封装。
+
+对于一些博客中的动画，我们可以依赖 [react-spring](https://react-spring.io/)，其能满足大部分 UI 相关的动画需求。
+
+而技术栈中最为关键的便是 [mdx](https://mdxjs.com/)。
+
+## MDX
+MDX 是 Markdown 的扩展，其不仅可以解析 Markdown 语法，还允许您导入和使用自定义 React 组件。
+
+比如普通的 Markdown 基础代码为：
+```Markdown
+This is another paragraph, with some **bold text**.
+
+Here's an unordered list:
+- Apple
+- Banana
+- Carrot
+```
+在 web 界面使用 Markdown 时，需要一个 "转译" 步骤，将 Markdown 转换为相对应的 HTML，以便浏览器可以理解。这些星号变成一个 strong 标签，列表变成一个 ul，每个段落都有一个 p 标签。
+
+这很好，但这意味着我们仅限于 Markdown 知道的少数 HTML 元素。
+
+MDX 将格式更进一步，并允许我们以 React 组件的形式包含我们自己的元素，比如官网给出的例子：
+```mdx
+import PieChart from '../components/PieChart';
+This paragraph introduces a **data visualization**:
+
+<PieChart
+  title="Favourite foods"
+  data={[
+    { label: 'Pizza', value: '30%' },
+    { label: 'Broccoli', value: '5%' },
+    { label: 'Haagen-Dasz', value: '65%' },
+  ]}
+/>
+```
+我们可以创建自己丰富的原语集，并在我们的内容中使用它们。这会给程序员带来更多的想法，实际上，您在 React 应用程序中所做的任何事情现在都可以嵌入到您的博客文章中的任何位置。
+
+当然这不是完成此任务的唯一方法，但它是本人在博客开发中使用最为舒适的一种。
+
+## Metadata
+除了内容本身，我们还需要一种方法来存储 “metadata” ——诸如标题、摘要、出版日期之类的东西。
+
+由于本人之前使用 Hexo 作为博客技术框架，所以这里便选择 *Frontmatter*，其是 Markdown 的插件，允许我们在文档顶部定义键值对。
+比如我们的文档可能是这样：
+```
+---
+title: My Blog
+seoTitle: How I Built my Blog using MDX, Next.js, and React
+abstract: An in-depth look at the technical structure for my blog.
+isPublished: true
+date: 2021-04-20T09:15:00-0400
+---
+(Actual blog post content here!)
+```
+当然具体的数据内容会因您的 MDX 工具而异。
+
+## 文章列表
+在主页，界面分为多个模块：
+1. 按时间顺序排列的文章列表。
+2. 作者推荐的帖子。
+
+![](https://img.bplink66.com/2021/11/24/291ve5wynot.png)
+
+使用该方法 `getStaticProps` 方法，Next 允许我们在站点构建时，在站点部署之前做一些工作。我们可计算在那段时间内要在这些部分中显示的帖子列表。
+
+比如代码会是这种样子：
+```jsx
+// pages/index.js
+function Homepage({ newestContent, popularContent }) {
+  // content
+}
+export async function getStaticProps() {
+  const newestContent = await getLatestContent({ limit: 20 });
+  const popularContent = await getPopularContent({ limit: 10 });
+  return {
+    props: { newestContent, popularContent },
+  };
+}
+```
+其中 `getLatestContent` 是由自己封装的一种遍历本地文件系统以查找所有 `.mdx` 博客文章的方法。
+逻辑看起来像是这样的：
+1. 收集目录中的所有 MDX 文件，这里可以使用 `fs.readdirSync`。
+2. 解析 *frontmatter*，推荐使用 [gray-matter](https://github.com/jonschlinkert/gray-matter)。
+3. 过滤掉所有未发布的帖子，我们可以添加 `isPublished` 标识是否发布，如果为 `true` 标识已发布。
+4. 对所有的文字根据 `date` 进行排序。
+5. 返回数据，前端渲染。
+
+当然这种开发方式看似非常的低级，但不得不承认它是非常有效的，这肯定是更多的工作，但它给了我很多控制权。
+
+## 结尾
+因为博客需要更多的磨练，所以暂时是闭源的，如果您需要使用自己的技术搭建博客，我鼓励您不要过于关注本博客的任何特定方面。提出您自己的自定义元素是创建自己的博客的最佳部分之一！你的博客是你自己的个人实验室和游乐场：尝试不同的想法，看看你能想出什么，你会有更多的乐趣，并创造出更令人难忘和引人入胜的东西。

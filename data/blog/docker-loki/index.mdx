@@ -1,0 +1,97 @@
+---
+title: Docker 安装 Loki
+categorie: 技术向
+date: 2021-11-10 11:22:15
+slub: docker-loki
+abstract: Loki+Promtail+Grafana(简称LPG)是一套轻量级日志收集方案，既对内存要求很低，同时也有着不错的ui界面。
+isPublished: true
+tags:
+  - Docker
+---
+如果需要简便的日志收集功能，那么 LPG 是一套不错的选择。主要是因为其比较轻量级。
+
+LPG不会对日志进行全文索引，而是为每个日志流设置一组标签。其核心便是下面几个组件：
+- **Promtail**：日志收集器，负责收集我们项目的日志，并把收集到的日志推送到Loki中去。
+- **Loki**：聚合存储日志数据，可以作为Grafana的数据源，为Grafana提供可视化数据。
+- **Grafana**：从Loki中获取日志信息，进行可视化展示。
+
+![](https://img.bplink66.com/2021/11/10/2mu4oqcvjys.jpg)
+
+## 安装
+这里是用 `docker-compose` 进行安装，我们添加 `docker-compose.yml` 文件：
+```yml
+version: "3"
+
+networks:
+  loki:
+
+services:
+  loki:
+    container_name: loki
+    image: grafana/loki:2.4.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:2.4.0
+    volumes:
+      - /usr/local/disk/nginx/logs:/var/log:ro
+      - ./promtail/promtail.yaml:/etc/promtail/docker-config.yaml
+    command: -config.file=/etc/promtail/docker-config.yaml
+    networks:
+      - loki
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    networks:
+      - loki
+```
+我们需要注意上面的数据卷路径，如果不存在请注意修改。
+添加 `promtail.yaml` 配置
+```
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets:
+        - localhost
+      labels:
+        job: varlogs
+        __path__: /var/log/*log
+```
+其是我们收集日志的一些配置，我们直接使用默认的即可。
+最后使用 docker-compose 命令进行启动：
+```
+docker-compose up -d
+```
+
+## Grafand
+运行成功后访问 http://ip:3000 登录Grafana，账号密码为 `admin:admin`，然后重置我们的密码。
+登录成功后添加Loki数据源。
+
+![](https://img.bplink66.com/2021/11/10/2g1jn3wsmwq.png)
+
+之后设置 Loki 访问地址 http://loki:3100，进行测试连接。
+
+![](https://img.bplink66.com/2021/11/10/zyeanolkm6.png)
+
+接下来在Explore选择Loki，并输入查询表达式（Loki query）为 `{filename="/var/log/access.log"}`
+
+![](https://img.bplink66.com/2021/11/10/1l0yp33p6my.png)
+
+## 结尾
+LPG日志收集方案确实非常轻量级，性能也不错！不过如果你有对日志有着更高需求还是换种方案比较好。
