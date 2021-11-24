@@ -6,8 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
-    "lint": "next lint",
-    "build:rss": "tsc ./build-helpers/generate-rss-feed.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@tippyjs/react": "^4.2.5",

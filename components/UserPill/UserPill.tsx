@@ -3,7 +3,7 @@ import NextLink from 'next/link';
 import styled from 'styled-components';
 import { useSpring, animated } from 'react-spring';
 
-import { TIGHT_SPRING } from '../../constants';
+import { TIGHT_SPRING } from '../../colors';
 import usePrefersReducedMotion from '../../hooks/use-prefers-reduced-motion';
 import { TextLink } from '../Link/Link';
 
