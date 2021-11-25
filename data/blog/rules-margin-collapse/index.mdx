@@ -1,0 +1,170 @@
+---
+title: margin 崩溃规则
+categorie: 技术向
+date: 2021-11-24 12:20:09
+slub: rules-margin-collapse
+abstract: 在 CSS 中，相邻的边距有时会重叠。这被称为 “边缘崩溃”，它以非常卑鄙的方式而闻名。
+isPublished: true
+tags:
+  - CSS
+---
+
+比如下面是一个经典的例子，其涉及两个兄弟段落：
+```html
+<style>
+  p {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    border: 1px solid #000;
+  }
+</style>
+<p>第一个段落</p>
+<p>第二个段落</p>
+```
+
+<MarginCollapse type="column" />
+
+可以看出他们的 24 像素边距合并在一起，占据相同的空间，而不是 48 像素相隔！
+
+这个问题看似很简单，但是如果您已经编写了一段时间的 CSS，那么您几乎肯定会惊讶于边距没有折叠，或者它们以奇怪和意外的方式折叠。在实际项目中，各种情况都会使问题复杂化。
+
+但好消息是，一旦我们了解了这个机制背后的规则，它就会变得更加清晰，也不再那么令人惊讶✨。
+
+## 仅垂直边距折叠
+在边距折叠规则中，语言设计者做出了一个奇怪的选择：**水平边距不应该折叠**。
+
+<MarginCollapse type="row" />
+
+如果你认为水平方向一定不会发生边距折叠，那就大错特错了，比如下面代码：
+```html
+<style>
+  html {
+    writing-mode: vertical-lr;
+  }
+  p {
+    display: block;
+    margin-block-start: 24px;
+    margin-block-end: 24px;
+  }
+</style>
+<p>第一个段落</p>
+<p>第二个段落</p>
+```
+
+可以看出，这种情况下，边距也会发生重叠，所以我们的第一条规则有点用词不当。更准确地说，**只有块方向边距会崩溃**。
+
+## 仅相邻元素折叠
+使用 `<br />` 标签来增加块元素之间的空间有些常见。
+```html
+<style>
+  p {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    border: 1px solid #000;
+  }
+</style>
+<p>第一个段落</p>
+<br />
+<p>第二个段落</p>
+```
+
+尽管 `<br />` 标签不可见且为空，但两个其他元素之间的任何元素都会阻止边距折叠。元素需要在 DOM 中相邻才能使其边距折叠。
+
+## 更大的边距获胜
+如果两边的边距不对称时怎么办？比如说，顶部元素需要下方 70px 的空间，而底部元素只需要 20px？
+```html
+<style>
+  .p1 {
+    margin-bottom: 70px;
+    border: 1px solid #000;
+  }
+  .p2 {
+    margin-top: 20px;
+    border: 1px solid #000;
+  }
+</style>
+<p class="p1">第一个段落</p>
+<br />
+<p class="p2">第二个段落</p>
+```
+那么根据规则，更大的数字获胜。
+
+## 嵌套不能防止崩溃
+我们刚才说过，相邻元素会阻止边距折叠，但是我们思考下面的代码：
+```html
+<style>
+  p {
+    margin-top: 48px;
+    margin-bottom: 48px;
+  }
+</style>
+<div>
+  <p>第一个段落</p>
+</div>
+<p>第二个段落</p>
+```
+我们会发现，虽然我们嵌套了一层元素，但边距仍然会崩溃！
+
+其实边距旨在增加兄弟姐妹之间的距离。它并不是要增加子级与其父级边界框之间的差距；这就是填充的用途。
+边距将始终尝试增加兄弟元素之间的距离，即使这意味着将边距转移到父元素！在这种情况下，效果与我们将边距应用于 parent 而不是 child 的效果相同。
+
+当然必须满足一些条件才能将边距转移到父级：
+*. 中间没有其他元素。
+*. 父元素不能含有 `height` 属性。
+*. 父元素沿相关边缘没有任何填充或边框。
+
+我们以将填充/边框视为一种墙，如果它位于两个边缘之间，它们就不会倒塌，因为有一道墙挡住了路。宽度也不重要；即使 1px 的 padding 也会干扰边距折叠。
+
+## 可能会朝同一方向坍塌
+令人惊讶的是，即使在同一方向，边距也可能会崩溃。
+
+比如我们可以理解下下面代码：
+```html
+<style>
+  .parent {
+    margin-top: 70px;
+  }
+  .child {
+    margin-top: 20px;
+  }
+</style>
+<div class="parent">
+  <p class="child">第一个段落</p>
+</div>
+```
+可以看出距离顶部距离为 70，子边距被 "吸收" 到父边距中。两者正在结合，并且受制于我们迄今为止看到的相同的边际崩溃规则。
+
+## 多个边距之间也可能会塌陷
+边距崩溃不仅限于两个边距！
+
+比如下面代码中，同样会发生边距崩溃：
+```html
+<style>
+  header {
+    margin-bottom: 10px;
+  }
+  header h1 {
+    margin-bottom: 20px;
+  }
+
+  section {
+    margin-top: 30px;
+  }
+  section p {
+    margin-top: 40px;
+  }
+</style>
+<header>
+  <h1>My Project</h1>
+</header>
+<section>
+  <p>Hello World</p>
+</section>
+```
+最终，得出 header 和 section 之间的边距为 40px。
+
+## 仅流布局
+首先上面的所有例子，都是存在于标准文档流中，但是对于 FlexBox、Grid、position等脱离标准文档流的元素便会失效。当与某些技术结合时，这可能会令人惊讶，所以在某些情况下尽量不要利用 margin。
+
+## 结尾
+在一些情况下 margin 之间的边距会变得难以控制，特别是开发环境下，布局多种多样，一旦不小心，便会造成边距崩溃，所以某些情况下使用 padding、或展位符会比 margin 有更好的效果。

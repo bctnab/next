@@ -6,6 +6,7 @@ import { MDXRemote } from 'next-mdx-remote';
 import {
   COLOR_SWAP_TRANSITION_DURATION,
 } from '../colors';
+import { COMPONENTS } from '../lib/mdx-components';
 
 import { isBlank } from '../utils/validate';
 import Footer from '../components/Footer/Footer';
@@ -51,7 +52,7 @@ const ArticleLayout = ({
               </Meta>
             </ArticleHeader>
             <ArticleBody className="markdown-body">
-              <MDXRemote {...mdx} />
+              <MDXRemote {...mdx} components={COMPONENTS} />
               <ThenEnd>文章已结束，谢谢您的阅读！</ThenEnd>
             </ArticleBody>
             <ArticleFooter>
