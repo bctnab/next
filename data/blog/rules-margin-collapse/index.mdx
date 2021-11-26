@@ -3,7 +3,7 @@ title: margin 崩溃规则
 categorie: 技术向
 date: 2021-11-24 12:20:09
 slub: rules-margin-collapse
-abstract: 在 CSS 中，相邻的边距有时会重叠。这被称为 “边缘崩溃”，它以非常卑鄙的方式而闻名。
+abstract: 在 CSS 中，相邻的边距有时会发生重叠。这被称为 “边缘崩溃”，它以非常卑鄙的方式而闻名。
 isPublished: true
 tags:
   - CSS
@@ -15,7 +15,7 @@ tags:
   p {
     margin-top: 24px;
     margin-bottom: 24px;
-    border: 1px solid #000;
+    border: 3px solid #000;
   }
 </style>
 <p>第一个段落</p>
@@ -51,7 +51,7 @@ tags:
 <p>第二个段落</p>
 ```
 
-可以看出，这种情况下，边距也会发生重叠，所以我们的第一条规则有点用词不当。更准确地说，**只有块方向边距会崩溃**。
+可以看出，这种情况下，水平的边距也会发生重叠，所以我们的第一条规则有点用词不当。更准确地说，**只有块方向边距会发生崩溃**。
 
 ## 仅相邻元素折叠
 使用 `<br />` 标签来增加块元素之间的空间有些常见。

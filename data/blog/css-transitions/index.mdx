@@ -1,0 +1,130 @@
+---
+title: CSS Transition
+categorie: 技术向
+date: 2021-11-25 14:25:39
+slub: css-transition
+abstract: 前端中动画相关插件库以及犹如雨后春笋一般的出现，像 React Spring 和 Framer Motion 等知名的插件库都有着不错的使用量，但最基本和最关键的部分是不起眼的 CSS transition，它是大多数前端开发人员学习的第一个动画工具，却越来越无人问津。但其实即使是饱经风霜的前端老手仍然经常使用这个工具。
+isPublished: true
+tags:
+  - CSS
+  - Animation
+---
+
+下面代码都不适应任何 JS 代码，完全由 CSS 来实现，旨在学习更多关于 CSS transition 的知识，以及我们如何使用它们来创建华丽、优美的动画。
+
+## 基础动画
+如果我们创建一个在悬停时移动的按钮的动画。
+
+当没有使用 transition 时代码如下：
+```html
+<button class="btn">
+  Hello World
+</button>
+
+<style>
+  .btn {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: none;
+    background: slateblue;
+    color: white;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .btn:hover {
+    transform: translateY(-30px);
+  }
+</style>
+```
+其会得出下面的结果：
+
+<CssTransition />
+
+当我们 `:hover` 时，会执行 `transform: translateY(-10px)` 节点会向上移动，当然如果使用 `margin-top` 也会达到同样效果，但 margin 会造成边距塌陷。
+
+在默认的情况下，CSS 中的更改会立即发生。一瞬间，按钮就传送到了一个新的位置！这与事物逐渐发生的自然世界格格不入。
+
+那么一旦我们在 CSS 代码中插入 `transition` 状态时，事情便会发生很大的变化：
+```html
+...
+<style>
+  .btn {
+    ...
+    transition: transform 250ms;
+  }
+  ...
+</style>
+```
+其会得出下面的结果：
+
+<CssTransition isTransition />
+
+`transition` 的值可以为多个，但主要的只有两个：
+
+1. 希望动画的属性的名称。
+2. 动画的持续时间。
+
+如果需要多个属性动画，我们可以使用 , 进行分割：
+```html
+transition: transform 250ms, opacity 400ms;
+```
+除了单个制定，我们也可以使用 `all` 进行统一指定，但 **建议不要使用它**。
+
+## Timing Function
+当我们告诉一个元素从一个位置转换到另一个位置时，浏览器需要计算出每个 “中间” 框架应该是什么样子。
+
+假如：从左到右移动一个元素，持续时间为 1 秒。流畅的动画应该以 60fps 的速度运行，这意味着我们需要在开始和结束之间平局分配 60 个单独的位置。
+
+如果我们要绘制元素随时间的位移图，它看起来像这样：
+
+<img src="https://img.bplink66.com/2021/11/25/8oiiube0cv.png" width="200" />
+
+css 中还有着其他的几种计时函数可供我们使用。我们可以通过 `transition-timing-function` 进行指定：
+```css
+.btn {
+  transition: transform 250ms;
+  transition-timing-function: linear;
+}
+```
+也可以在定义 `transition` 时直接使用：
+```css
+.btn {
+  transition: transform 250ms linear;
+}
+```
+`linear` 很少的时候是最好的选择，毕竟现实世界中几乎没有什么是这样移动的，好的动画模仿自然世界，所以我们应该选择更有机的东西！
+那么除了 `linear` 我们还有其他的选择。
+### ease-out
+`ease-out` 开始会以很快的速度进行动画，但是越到后面速度便会越慢，其就像一头野牛一样冲进来，但它的能量耗尽了。到最后，它就像一只昏昏欲睡的乌龟。
+
+如果我们要绘制元素随时间的位移图，它看起来像这样：
+
+<img src="https://img.bplink66.com/2021/11/25/fva07qxuui.png" width="200" />
+
+**那么 `ease-out` 什么时候使用呢？** 当某些元素从屏幕外进入时，它最常用。它产生的效果是有什么东西从远处匆匆赶来，并在用户面前安顿下来。
+### ease-in
+`ease-in` 和 `ease-out` 动画相反，其开始比较缓慢，最后开始加速。
+`ease-out` 对于从屏幕外进入视图的事物很有用，那么 `ease-in` 自然地，对于相反的情况很有用：将某些东西移动到视口的边界之外。
+
+<img src="https://img.bplink66.com/2021/11/25/2peajpbzwmc.png" width="200" />
+
+这种动画在当有东西进入和退出视口时很有用，比如 Modal。
+### ease-in-out
+`ease-in-out` 它是前面两个动画的组合。
+这个计时功能是对称的。它具有等量的加速和减速。
+
+<img src="https://img.bplink66.com/2021/11/25/otugfzyq97.png" width="200" />
+
+我们可以发现这条曲线对于循环中发生的任何事情最有用（例如，一个元素淡入淡出，一遍又一遍）。
+
+这个 `linear` 和前面的都有所不同，只有在最适合的环境下，使用最适合的技术才是最好的。
+### ease
+**ease 是默认值**--如果你没有指定计时函数，`ease` 就会被使用。如果从名称来看其名称糟糕透了，从字面上看，其不具任何说明行性。但从效果上来说其是完美的，其是最为常用的动画，适用于很多的场景，元素移动、没有进入或退出视口时，`ease` 通常是一个不错的选择。
+
+<img src="https://img.bplink66.com/2021/11/25/11tqw2n0nyz.png" width="200" />
+
+
+## 结尾
+CSS transition 虽然是基础，但这并不意味着它们很容易。它们有着惊人的深度。在上面文章中只是简单介绍了动画的效果，并没有太深入的内容。而优秀的 transition 使用，可以使应用程序感觉 “真实”，带给用户更好的体验。
