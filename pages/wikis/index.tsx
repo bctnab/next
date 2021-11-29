@@ -1,21 +1,19 @@
 import React from 'react';
 
 import {
-  getPopularContent,
+  getPopularBlogs,
   getCategories,
 } from '../../lib/content';
+import Sticky from '../../components/Sticky/Sticky';
 import StandardLayout from '../../layouts/Standard';
+import TopCategories from '../../components/Card/TopCategories';
+import AuthorContent from '../../components/Card/AuthorContent';
+import PopularContent from '../../components/Card/PopularContent';
 import ArticleContent from '../../components/ArticleContent/ArticleContent';
 
-const Homepage = ({
-  categories,
-  popularContent,
-}) => {
+const MainContent = () => {
   return (
-    <StandardLayout
-      categories={ categories }
-      populars={ popularContent }
-    >
+    <>
       <ArticleContent
         type="wiki"
         title="图库日志"
@@ -34,17 +32,40 @@ const Homepage = ({
         abstract="通常对于操作符我们只会记录操作符简单语法，并不会记录如何工作的。由于数量过多如果你厌倦了那该死的操作符，那么它会告诉你。"
         error="项目开发中，暂不支持访问"
       />
-    </StandardLayout>
+    </>
+  )
+}
+const RightContent = ({ populars, categories }) => {
+  return (
+    <>
+      <AuthorContent />
+      <Sticky top="1.5rem">
+        <PopularContent data={ populars } />
+        <TopCategories data={ categories } />
+      </Sticky>
+    </>
+  )
+}
+
+const WikisPage = ({
+  categories,
+  populars,
+}) => {
+  return (
+    <StandardLayout
+      mainContent={ <MainContent /> }
+      rightContent={ <RightContent populars={ populars } categories={ categories } /> }
+    />
   );
 };
 
 export async function getStaticProps() {
   const categories = await getCategories();
-  const popularContent = await getPopularContent();
+  const populars = await getPopularBlogs();
 
   return {
-    props: { categories, popularContent },
+    props: { categories, populars },
   };
 }
 
-export default Homepage;
+export default WikisPage;

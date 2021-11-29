@@ -1,119 +1,70 @@
 import { uniq } from 'lodash';
 import { join } from 'path';
-import { formatDate, sortPosts, postGroupBy } from '../utils/utils';
 import matter from 'gray-matter';
 import { readdirSync, readFileSync } from 'fs';
+import { formatDate, sortPosts, postGroupBy, getPaths, getBlogContent, getDatas } from './utils';
 
 type articleQuery = {
   limit?: number,
   categorie?: string
 }
 
+//! post
+// get paths
+export async function getPostPaths() {
+  const paths = getPaths('data/blog', 'slug', 'slug');
+  return paths;
+}
 // get posts
-export async function getBlogPostContent(params: articleQuery) {
+export async function getPosts(params: articleQuery) {
   const { limit, categorie } = params;
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
+  let posts = getDatas('data/blog');
 
-  let posts = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx')
-    const fileContents = readFileSync(filePath, 'utf8')
-    const { data } = matter(fileContents);
-    return {
-      slug: data.slub,
-      title: data.title,
-      preview: data.preview || '',
-      categorie: data.categorie,
-      time: data.date.toString(),
-      date: formatDate(data.date, 'yyyy-MM-dd'),
-      abstract: data.abstract,
-      isPublished: data.isPublished,
-    }
-  });
+  posts = posts.map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    preview: item.preview || '',
+    categorie: item.categorie,
+    time: item.date.toString(),
+    date: formatDate(item.date, 'yyyy-MM-dd'),
+    abstract: item.abstract,
+    isPublished: item.isPublished,
+  }))
   posts = posts.filter(function (item) {
     return (item.isPublished === true) && (!categorie || (!!categorie && item.categorie === categorie));
   });
   return sortPosts(posts, limit);
 }
+// get popular posts
+export async function getPopularBlogs() {
+  let posts = getDatas('data/blog');
 
-// get categories
-export async function getCategories() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
-  const categories = {};
-
-  filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx');
-    const fileContents = readFileSync(filePath, 'utf8');
-    const { data } = matter(fileContents);
-    categories[data.categorie] = ((categories[data.categorie] || 0) + 1);
-  });
-
-  return categories;
-}
-
-// get post paths
-export async function getPostPaths() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
-
-  let posts = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx')
-    const fileContents = readFileSync(filePath, 'utf8')
-    const { data } = matter(fileContents);
-
-    return {
-      params:{
-        slug: data.slub
-      }
-    };
-  });
-  return posts;
-}
-
-// get popular post
-export async function getPopularContent() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
-
-  let posts = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx')
-    const fileContents = readFileSync(filePath, 'utf8')
-    const { data } = matter(fileContents);
-    return {
-      slug: data.slub,
-      title: data.title,
-      time: data.date.toString(),
-      date: formatDate(data.date, 'yyyy-MM-dd'),
-      isPopular: data.isPopular,
-      isPublished: data.isPublished,
-    }
-  });
+  posts = posts.map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    time: item.date.toString(),
+    date: formatDate(item.date, 'yyyy-MM-dd'),
+    isPopular: item.isPopular,
+    isPublished: item.isPublished,
+  }));
   posts = posts.filter(function (item) {
     return (item.isPublished === true && item.isPopular === true);
   });
 
   return posts;
 }
-
 // post time axis
 export async function getPostTimeAxis() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  let filenames = readdirSync(postsDirectory);
+  let posts = getDatas('data/blog');
 
-  let posts = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx')
-    const fileContents = readFileSync(filePath, 'utf8')
-    const { data } = matter(fileContents);
-    return {
-      slug: data.slub,
-      title: data.title,
-      time: data.date.toString(),
-      year: formatDate(data.date, 'yyyy'),
-      date: formatDate(data.date, 'yyyy-MM-dd'),
-      isPublished: data.isPublished,
-    }
-  });
+  posts = posts.map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    time: item.date.toString(),
+    year: formatDate(item.date, 'yyyy'),
+    date: formatDate(item.date, 'yyyy-MM-dd'),
+    isPublished: item.isPublished,
+  }));
   posts = posts.filter(function (item) {
     return (item.isPublished === true);
   });
@@ -121,132 +72,128 @@ export async function getPostTimeAxis() {
   posts = postGroupBy(posts, 'year');
   return posts;
 }
-
-// get tags
-export async function getTags() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  let filenames = readdirSync(postsDirectory);
-  const tags = [];
-  
-  filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx');
-    const fileContents = readFileSync(filePath, 'utf8');
-    const { data } = matter(fileContents);
-    if(data.tags) tags.push(...data.tags);
-  });
-  return uniq(tags);
+// get post content
+export async function getPostContent(slug) {
+  const content = getBlogContent('data/blog', slug);
+  return content;
 }
+// query by categorie
+export async function queryPostByCategorie(categorie) {
+  let posts = getDatas('data/blog');
 
-// get tag paths
-export async function getTagsPaths() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  let filenames = readdirSync(postsDirectory);
-  const tags = [];
-
-  filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx');
-    const fileContents = readFileSync(filePath, 'utf8');
-    const { data } = matter(fileContents);
-    if(data.tags) tags.push(...data.tags);
-  });
-  return uniq(tags).map(item => ({
-    params: {
-      tag: item
-    }
+  posts = posts.map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    tags: item.tags || [],
+    preview: item.preview || '',
+    categorie: item.categorie,
+    time: item.date.toString(),
+    date: formatDate(item.date, 'yyyy-MM-dd'),
+    abstract: item.abstract,
+    isPublished: item.isPublished,
   }));
-}
-
-// query post by tag
-export async function queryPostByTag(tag) {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
-
-  let posts = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx')
-    const fileContents = readFileSync(filePath, 'utf8')
-    const { data } = matter(fileContents);
-    return {
-      slug: data.slub,
-      title: data.title,
-      tags: data.tags || [],
-      preview: data.preview || '',
-      categorie: data.categorie,
-      time: data.date.toString(),
-      date: formatDate(data.date, 'yyyy-MM-dd'),
-      abstract: data.abstract,
-      isPublished: data.isPublished,
-    }
+  posts = posts.filter(function (item) {
+    return (item.isPublished === true) && (item.categorie === categorie);
   });
+  return sortPosts(posts, undefined);
+}
+// query by tag
+export async function queryPostByTag(tag) {
+  let posts = getDatas('data/blog');
+
+  posts = posts.map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    tags: item.tags || [],
+    preview: item.preview || '',
+    categorie: item.categorie,
+    time: item.date.toString(),
+    date: formatDate(item.date, 'yyyy-MM-dd'),
+    abstract: item.abstract,
+    isPublished: item.isPublished,
+  }));
   posts = posts.filter(function (item) {
     return (item.isPublished === true) && (item.tags.indexOf(tag) >= 0);
   });
   return sortPosts(posts, undefined);
 }
 
+//! tag
+// get paths
+export async function getTagsPaths() {
+  const paths = getPaths('data/blog', 'tags', 'tag');
+  return paths;
+}
+// get tags
+export async function getTags() {
+  let posts = getDatas('data/blog');
+  const tags = [];
+  posts.map((item) => {
+    if(item.tags) tags.push(...item.tags);
+  });
+  return uniq(tags);
+}
+
+//! categorie
+// get paths
+export async function getCategoriesPaths() {
+  const paths = getPaths('data/blog', 'categorie', 'categorie');
+  return paths;
+}
+// get categories
+export async function getCategories() {
+  let posts = getDatas('data/blog');
+  const categories = {};
+
+  posts.map((item) => {
+    categories[item.categorie] = ((categories[item.categorie] || 0) + 1);
+  });
+  return categories;
+}
+
+//! Snippe
+// get paths
+export async function getSnippePaths() {
+  const paths = getPaths('data/snippets', 'slug', 'slug');
+  return paths;
+}
+// get snippets
+export async function getSnippets() {
+  let posts = getDatas('data/snippets');
+
+  posts = posts.map((item) => {
+    return {
+      slug: item.slug,
+      title: item.title,
+      categorie: item.categorie,
+      time: item.date.toString(),
+      date: formatDate(item.date, 'yyyy-MM-dd'),
+      abstract: item.abstract,
+      isPublished: item.isPublished,
+    }
+  });
+
+  posts = posts.filter(function (item) {
+    return (item.isPublished === true);
+  });
+  return sortPosts(posts, undefined);
+}
 // get post content
-export async function getPostContent(slug) {
-  const postsDirectory = join(process.cwd(), 'data/blog');
+export async function getSnippeContent(slug) {
+  const postsDirectory = join(process.cwd(), 'data/snippets');
   const filenames = readdirSync(postsDirectory);
 
   for(let i = 0; i < filenames.length; i++){
     const filePath = join(postsDirectory, filenames[i], 'index.mdx')
     const fileContents = readFileSync(filePath, 'utf8')
     const { content, data } = matter(fileContents);
-    if( slug === data.slub ){
+    if( slug === data.slug ){
       return {
         title: data.title,
         content: content,
-        preview: data.preview || '',
-        categorie: data.categorie,
-        tags: data.tags || [],
         time: data.date.toString(),
         date: formatDate(data.date, 'yyyy-MM-dd'),
-        abstract: data.abstract,
       }
     }
   }
-}
-
-// get tag paths
-export async function getCategoriesPaths() {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
-  const categories = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx');
-    const fileContents = readFileSync(filePath, 'utf8');
-    const { data } = matter(fileContents);
-    return data.categorie;
-  });
-  return uniq(categories).map(item => ({
-    params: {
-      categorie: item
-    }
-  }));
-}
-
-// query post by categorie
-export async function queryPostByCategorie(categorie) {
-  const postsDirectory = join(process.cwd(), 'data/blog');
-  const filenames = readdirSync(postsDirectory);
-
-  let posts = filenames.map((filename) => {
-    const filePath = join(postsDirectory, filename, 'index.mdx')
-    const fileContents = readFileSync(filePath, 'utf8')
-    const { data } = matter(fileContents);
-    return {
-      slug: data.slub,
-      title: data.title,
-      tags: data.tags || [],
-      preview: data.preview || '',
-      categorie: data.categorie,
-      time: data.date.toString(),
-      date: formatDate(data.date, 'yyyy-MM-dd'),
-      abstract: data.abstract,
-      isPublished: data.isPublished,
-    }
-  });
-  posts = posts.filter(function (item) {
-    return (item.isPublished === true) && (item.categorie === categorie);
-  });
-  return sortPosts(posts, undefined);
 }

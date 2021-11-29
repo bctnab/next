@@ -6,14 +6,19 @@ export const LIGHT_COLORS: {
   text: 'rgb(10, 12, 16)',
   background: '#fff',
   fillBackground: '#f2f5f8',
-  // 主题色
   primary: 'rgb(50, 115, 220)',
-  error: 'rgb(249, 7, 88)',
-  // 圆角
+  secondary: 'rgb(230, 0, 104)',
   boxRadius: '0.5rem',
-  // 边框阴影
   boxShadow: '0 4px 10px rgba(0,2, 4, 0.06),0 0 1px rgba(0, 2, 4, 0.11)',
   decorative: 'rgb(140 205 236)',
+  muted: 'rgb(224, 235, 246)',
+  mutedBackground: 'rgba(224, 235, 246, 0.85)',
+  error: 'rgb(249, 7, 88)',
+  errorBackground: 'rgba(214, 6, 75m 0.1)',
+  success: 'rgb(0, 204, 137)',
+  successBackground: 'rgba(0, 204, 137, 0.1)',
+  alert: 'rgb(255, 158, 0)',
+  alertBackground: 'rgba(255, 221, 0, 0.25)',
 
   gray: {
     '100': 'rgb(240, 241, 246)',
@@ -31,6 +36,7 @@ export const LIGHT_COLORS: {
 
 LIGHT_COLORS.subtleFloating = LIGHT_COLORS.background;
 LIGHT_COLORS.subtleBackground = LIGHT_COLORS.gray[100];
+LIGHT_COLORS.info = LIGHT_COLORS.primary;
 
 export const BREAKPOINT_SIZES: {
   xs: number,

@@ -1,6 +1,72 @@
 ---
 title: debounce
-abstract: 经典的去抖函数，可以解决多并发函数造成浏览器崩溃，或加载缓慢降低用户体验。
-categorie: javascript
-date: '2021 年 11 月'
+categorie: JavaScript
+date: '2021-11-27 18:30:23'
+slug: debounce
+abstract: 使用 JavaScript 实现的经典防抖函数。
+isPublished: true
 ---
+
+```javascript
+const debounce = (callback, wait) => {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback.apply(null, args);
+    }, wait);
+  };
+}
+```
+
+在 JS 中事件的捕获非常快，当您滚动页面、调整窗口大小或移动鼠标时，浏览器每秒可以捕获数十个事件。
+
+但是在大多数情况下，我们对事件的中间步骤不感兴趣；只对捕获结束状态感兴趣（当用户完成界面滚动或完成窗口大小调整时）。
+
+去抖动是一种策略，它可以让我们通过等待一段时间后触发事件来提高性能。只有用户停止触发事件时，我们的代码才将运行。
+
+在某些情况下，这不是必需的。但是如果涉及任何网络请求，或者 DOM 发生变化，这种技术可以显着提高应用程序的平滑度。
+
+## 用法
+```javascript
+const handleMouseMove = debounce((ev) => {
+  // TODO: event
+}, 250);
+window.addEventListener('mousemove', handleMouseMove);
+```
+在上面代码中，从用户开始移动鼠标，到停止移动 250ms 之前，什么都不会发生。
+
+我们可以这样使用 [useMemo](https://reactjs.org/docs/hooks-reference.html#usememo) 进行封装，目的就是避免每次渲染时重新生成。比如一个捕获鼠标 X 坐标捕获的示例：
+```jsx
+function App() {
+  const [mouseX, setMouseX] = React.useState(null);
+  const handleMouseMove = React.useMemo(
+    debounce((ev) => {
+      setMouseX(ev.clientX);
+    }, 250),
+    []
+  );
+  return (
+    <div onMouseMove={handleMouseMove}>
+      Mouse position: {mouseX}
+    </div>
+  );
+}
+```
+
+## 分析
+如果您并不明白上面封装的 `debounce` 中的代码，那么我们开始逐步分析。
+
+首先函数值都接收两个参数：一个回调函数、另一个为缓冲时间。
+
+同时我们也希望 `debounce` 返回的数据也是一个函数。通过下面代码对我们理解该函数会有所帮助：
+```jsx
+const debouncedFunction = debounce(function() { ... }, 250);
+
+console.log(typeof debouncedFunction); // `function`
+```
+而每次触发包装函数时，会发生两件事：
+1. 取消之前的相关任务。
+2. 重新生成一个新的超时时间，当缓冲时间过时之后，回调函数被执行，并将我们拥有的任何参数提供给它。
+
+重新分析上面鼠标移动的例子：用户移动鼠标 1 秒，移动事件将重复数十次，但是许多计划会被立即取消。而一旦鼠标停止移动，循环就会停止。当 250 毫秒过去时，我们的超时会触发，代码最终会运行。

@@ -5,24 +5,20 @@ import {
   queryPostByTag,
   getTagsPaths,
   getCategories,
-  getPopularContent,
+  getPopularBlogs,
 } from '../../lib/content';
+import Sticky from '../../components/Sticky/Sticky';
 import StandardLayout from '../../layouts/Standard';
 import Heading from '../../components/Heading/Heading';
+import TopCategories from '../../components/Card/TopCategories';
+import AuthorContent from '../../components/Card/AuthorContent';
+import PopularContent from '../../components/Card/PopularContent';
 import ContentPreview from '../../components/ContentPreview/ContentPreview';
 import ArticleContent from '../../components/ArticleContent/ArticleContent';
 
-const Homepage = ({
-  tag,
-  posts,
-  categories,
-  popularContent,
-}) => {
+const MainContent = ({ posts, tag }) => {
   return (
-    <StandardLayout
-      categories={ categories }
-      populars={ popularContent }
-    >
+    <>
       <ContentPreview>
         <Heading type="large-title">标签: { tag }</Heading>
         <Describe>共 { posts.length } 篇文章</Describe>
@@ -30,7 +26,32 @@ const Homepage = ({
       {
         posts.map((item) => <ArticleContent key={item.slug} data={item} type="ordered" />)
       }
-    </StandardLayout>
+    </>
+  )
+}
+const RightContent = ({ populars, categories }) => {
+  return (
+    <>
+      <AuthorContent />
+      <Sticky top="1.5rem">
+        <PopularContent data={ populars } />
+        <TopCategories data={ categories } />
+      </Sticky>
+    </>
+  )
+}
+
+const Tagpage = ({
+  tag,
+  posts,
+  categories,
+  populars,
+}) => {
+  return (
+    <StandardLayout
+      mainContent={ <MainContent posts={ posts } tag={ tag } /> }
+      rightContent={ <RightContent populars={ populars } categories={ categories } /> }
+    />
   );
 };
 
@@ -45,14 +66,14 @@ export async function getStaticProps({ params }) {
   const { tag } = params;
   const categories = await getCategories();
   const posts = await queryPostByTag(tag);
-  const popularContent = await getPopularContent();
+  const populars = await getPopularBlogs();
   
   return {
     props: {
       tag,
       posts,
       categories,
-      popularContent
+      populars
     },
   };
 }
@@ -64,4 +85,4 @@ export async function getStaticPaths() {
   };
 }
 
-export default Homepage;
+export default Tagpage;

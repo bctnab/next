@@ -3,26 +3,22 @@ import styled from 'styled-components';
 
 import {
   getCategories,
-  getPopularContent,
+  getPopularBlogs,
   getCategoriesPaths,
   queryPostByCategorie
 } from '../../lib/content';
-import Heading from '../../components/Heading/Heading';
+import Sticky from '../../components/Sticky/Sticky';
 import StandardLayout from '../../layouts/Standard';
+import Heading from '../../components/Heading/Heading';
+import TopCategories from '../../components/Card/TopCategories';
+import AuthorContent from '../../components/Card/AuthorContent';
+import PopularContent from '../../components/Card/PopularContent';
 import ContentPreview from '../../components/ContentPreview/ContentPreview';
 import ArticleContent from '../../components/ArticleContent/ArticleContent';
 
-const Homepage = ({
-  categorie,
-  posts,
-  categories,
-  popularContent,
-}) => {
+const MainContent = ({ posts, categorie }) => {
   return (
-    <StandardLayout
-      categories={ categories }
-      populars={ popularContent }
-    >
+    <>
       <ContentPreview>
         <Heading type="large-title">分类: { categorie }</Heading>
         <Describe>共 { posts.length } 篇文章</Describe>
@@ -30,7 +26,32 @@ const Homepage = ({
       {
         posts.map((item) => <ArticleContent key={item.slug} data={item} type="ordered" />)
       }
-    </StandardLayout>
+    </>
+  )
+}
+const RightContent = ({ populars, categories }) => {
+  return (
+    <>
+      <AuthorContent />
+      <Sticky top="1.5rem">
+        <PopularContent data={ populars } />
+        <TopCategories data={ categories } />
+      </Sticky>
+    </>
+  )
+}
+
+const Homepage = ({
+  categorie,
+  posts,
+  categories,
+  populars,
+}) => {
+  return (
+    <StandardLayout
+      mainContent={ <MainContent posts={ posts } categorie={ categorie } /> }
+      rightContent={ <RightContent populars={ populars } categories={ categories } /> }
+    />
   );
 };
 
@@ -44,7 +65,7 @@ const Describe = styled.div`
 export async function getStaticProps({ params }) {
   const { categorie } = params;
   const categories = await getCategories();
-  const popularContent = await getPopularContent();
+  const populars = await getPopularBlogs();
   const posts = await queryPostByCategorie(categorie);
 
   return {
@@ -52,7 +73,7 @@ export async function getStaticProps({ params }) {
       categorie,
       posts,
       categories,
-      popularContent
+      populars
     },
   };
 }

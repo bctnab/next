@@ -1,0 +1,90 @@
+---
+title: useTimeout
+categorie: React Hook
+date: '2021-11-29 19:01:44'
+slug: use-timeout
+abstract: 围绕 setTimeout 方法的 React Hook 包装器。
+isPublished: true
+---
+
+```javascript
+import React from 'react';
+export default function useTimeout(callback, delay) {
+  const timeoutRef = React.useRef(null);
+  const savedCallback = React.useRef(callback);
+
+  React.useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+  React.useEffect(() => {
+    const tick = () => savedCallback.current();
+    if (typeof delay === 'number') {
+      timeoutRef.current = window.setTimeout(tick, delay);
+      return () => window.clearTimeout(timeoutRef.current);
+    }
+  }, [delay]);
+
+  return timeoutRef;
+};
+```
+在 JS 中通过 setTimeout 实现指定时间后执行某些代码，然而在 React 中如果我们尝试按原样使用它，我们可能会遇到一些问题：
+1. window 是由浏览器推出的全局对象，而如果我们项目为服务端渲染项目会得出 `window` 未定义，当然 Node 中也实现了该方法，所以去除前面的 window 可以正常访问。
+2. 每当该组件重新渲染都会产生新的 timeout，而不是重新执行。
+3. 回调函数是陈旧的，无法获取到最新的 state 和 props 值。
+
+这个钩子是一个围绕 setTimeout 的包装器，您可以像使用 setTimeout 一样使用它，它会按您的预期工作。
+## 用法
+```jsx
+function App() {
+  const [hasTimeElapsed, setHasTimeElapsed] = React.useState(false);
+  useTimeout(() => {
+    setHasTimeElapsed(true);
+  }, 5000);
+  return (
+    <p>
+      {hasTimeElapsed
+        ? '5秒过去了!'
+        : '倒计时正在运行......'}
+    </p>
+  )
+}
+```
+第一次渲染将立即执行，并且 `hasTimeElapsed` 为 false。然后，5 秒后，它将重新渲染并 `hasTimeElapsed` 设置为 true。
+## 取消
+我们可以将 `delay` 设置为 `null` 随时取消 timeout：
+```jsx
+function App() {
+  const [abortTimeout, setAbortTimeout] = React.useState(false);
+  const [hasTimeElapsed, setHasTimeElapsed] = React.useState(false);
+
+  useTimeout(() => {
+    setHasTimeElapsed(true);
+  }, abortTimeout ? null : 5000);
+
+  return (
+    <p>
+      {hasTimeElapsed && 'Boom!'}
+      <button onClick={() => setAbortTimeout(true)}>Dismantle Bomb</button>
+    </p>
+  )
+}
+```
+除了上述方式，也可以使用 ID 强制取消：
+```jsx
+function App() {
+  const [hasTimeElapsed, setHasTimeElapsed] = React.useState(false);
+
+  const timeoutRef = useTimeout(() => {
+    setHasTimeElapsed(true);
+  }, 5000);
+  
+  return (
+    <p>
+      {hasTimeElapsed && 'Boom!'}
+      <button onClick={() => window.clearTimeout(timeoutRef.current)}>
+        Diffuse Bomb
+      </button>
+    </p>
+  )
+}
+```

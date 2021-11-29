@@ -1,8 +1,8 @@
 import React from 'react';
-import NextLink from 'next/link';
 import styled from 'styled-components';
 
 import { ExternalLink } from '../Link/Link';
+import Navigation from '../Navigation/Navigation';
 import Logo from '../Logo/Logo';
 
 const Header = () => {
@@ -11,30 +11,7 @@ const Header = () => {
       <Brand>
         <Logo />
       </Brand>
-      <MenuDesktop>
-        <DesktopNavigation>
-          <NextLink href="/" passHref>
-            <MenuDesktopItem>首页</MenuDesktopItem>
-          </NextLink>
-          <NextLink href="/archives" passHref>
-            <MenuDesktopItem>归档</MenuDesktopItem>
-          </NextLink>
-          <NextLink href="/tags" passHref>
-            <MenuDesktopItem>标签</MenuDesktopItem>
-          </NextLink>
-          {/* <NextLink href="/" passHref>
-            <MenuDesktopItem>代码片段</MenuDesktopItem>
-          </NextLink> */}
-          <NextLink href="/wikis" passHref>
-            <MenuDesktopItem>项目</MenuDesktopItem>
-          </NextLink>
-        </DesktopNavigation>
-
-        {/* <IconWrapper>
-          <DarkModeToggle />
-          <RssLink />
-        </IconWrapper> */}
-      </MenuDesktop>
+      <Navigation />
     </Wrapper>
   );
 };
@@ -60,13 +37,6 @@ const Brand = styled.div`
   }
 `;
 
-const MenuDesktop = styled.div`
-  flex-grow: 1;
-  overflow-x: auto;
-  display: flex;
-  flex-shrink: 0;
-  justify-content: center;
-`;
 const DesktopNavigation = styled.div`
   display: flex;
   flex-shrink: 0;
@@ -78,26 +48,6 @@ const DesktopNavigation = styled.div`
 `;
 const MenuDesktopItem = styled(ExternalLink)`
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: var(--color-text);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  padding: var(--header-item-padding);
-  &:hover{
-    color: var(--color-primary);
-    background-color: var(--color-gray-100);
-  }
-`;
-const IconWrapper = styled.div`
-  display: flex;
-  flex-shrink: 0;
-  margin-left: 0;
-  align-items: center;
-
-  @media ${(p) => p.theme.breakpoints.mobile} {
-    display: none;
-  }
 `;
 
 export default React.memo(Header);

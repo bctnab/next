@@ -1,0 +1,68 @@
+---
+title: useInterval
+categorie: React Hook
+date: '2021-11-29 19:01:44'
+slug: use-timeout
+abstract: React 中的 setInterval 友好包装方案。
+isPublished: true
+---
+
+```javascript
+function useInterval(callback, delay) {
+  const intervalRef = React.useRef(null);
+  const savedCallback = React.useRef(callback);
+
+  React.useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  React.useEffect(() => {
+    const tick = () => savedCallback.current();
+    if (typeof delay === 'number') {
+      intervalRef.current = window.setInterval(tick, delay);
+      return () => window.clearInterval(intervalRef.current);
+    }
+  }, [delay]);
+
+  return intervalRef;
+}
+```
+React 中的 Intervals 非常棘手；如果您不小心，那么可能无法获取到最新的 state 或 props 值。
+
+而上面的钩子可以让我们避免这种混乱，它也给了我们一个超能力：我们可以修改延迟而不必担心停止和开始间隔。
+
+## 用法
+在使用的方式上 `useInterval` 和 `setInterval` 基本是一样的：
+```javascript
+useInterval(() => {
+  console.log('我每秒都会被输出！');
+}, 1000);
+```
+比如我们实现一个 “秒表” 组件：
+```jsx
+const Stopwatch = () => {
+  const [status, setStatus] = React.useState('idle');
+  const [timeElapsed, setTimeElapsed] = React.useState(0);
+
+  useInterval(
+    () => {
+      setTimeElapsed((timeElapsed) => timeElapsed + 1);
+    },
+    status === 'running' ? 1000 : null
+  );
+
+  const toggle = () => {
+    setTimeElapsed(0);
+    setStatus((status) => (status === 'running' ? 'idle' : 'running'));
+  };
+
+  return (
+    <>
+      已用时间：{timeElapsed} (s)
+      <button onClick={ toggle }>
+        {status === 'running' ? 'Stop' : 'Start'}
+      </button>
+    </>
+  );
+};
+```

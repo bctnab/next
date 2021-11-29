@@ -1,0 +1,74 @@
+---
+title: FadeIn
+categorie: React Component
+date: '2021-11-27 18:02:40'
+slug: fade-in
+abstract: 使用该组件可以很容易实用程序组件在装载时淡入淡出效果。
+isPublished: true
+---
+
+```javascript
+import React from 'react';
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+const FadeIn = ({
+  duration = 300,
+  delay = 0,
+  children,
+  ...delegated
+}) => {
+  return (
+    <Wrapper
+      {...delegated}
+      style={{
+        ...(delegated.style || {}),
+        animationDuration: duration + 'ms',
+        animationDelay: delay + 'ms',
+      }}
+    >
+      {children}
+    </Wrapper>
+  );
+};
+
+const Wrapper = styled.div`
+  @media (prefers-reduced-motion: no-preference) {
+    animation-name: ${fadeIn};
+    animation-fill-mode: backwards;
+  }
+`;
+
+export default FadeIn
+```
+
+这样，通过一个缓慢的动画，让内容逐渐浮现，而不是突然添加一项内容，可以给用户带来更好的体验。
+
+`<FadeIn>` 同时也是项目中非常实用的组件，可以为一个（或一组）元素快速添加淡入动画。
+
+## 用法
+```jsx
+// <FadeIn> 包装器可以包装任何需要的元素:
+<FadeIn>
+  <ArticlePreview />
+</FadeIn>
+
+// 每次渲染都重新淡入淡出
+{isPreview && (
+  <FadeIn>
+    <ArticlePreview />
+  </FadeIn>
+)}
+
+// 可以自定义 `duration` 和 `delay`
+<FadeIn delay={250} duration={450}>
+  <p>Slightly later and longer animation</p>
+</FadeIn>
+```

@@ -41,10 +41,35 @@ export const ConfigProvider = ({ children }) => {
       newColors.fillBackground
     );
     root.style.setProperty('--color-primary', newColors.primary);
+    root.style.setProperty(
+      '--color-secondary',
+      newColors.secondary
+    );
     root.style.setProperty('--color-error', newColors.error);
     root.style.setProperty('--base-box-radius', newColors.boxRadius);
     root.style.setProperty('--color-box-shadow', newColors.boxShadow);
     root.style.setProperty('--color-decorative', newColors.decorative);
+    root.style.setProperty('--color-muted', newColors.muted);
+    root.style.setProperty(
+      '--color-muted-background',
+      newColors.mutedBackground
+    );
+    root.style.setProperty('--color-info', newColors.info);
+    root.style.setProperty('--color-success', newColors.success);
+    root.style.setProperty(
+      '--color-success-background',
+      newColors.successBackground
+    );
+    root.style.setProperty('--color-error', newColors.error);
+    root.style.setProperty(
+      '--color-error-background',
+      newColors.errorBackground
+    );
+    root.style.setProperty('--color-alert', newColors.alert);
+    root.style.setProperty(
+      '--color-alert-background',
+      newColors.alertBackground
+    );
     root.style.setProperty('--color-gray-100', newColors.gray[100]);
     root.style.setProperty('--color-gray-200', newColors.gray[200]);
     root.style.setProperty('--color-gray-300', newColors.gray[300]);

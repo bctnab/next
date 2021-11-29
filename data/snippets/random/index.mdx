@@ -1,0 +1,55 @@
+---
+title: random
+categorie: JavaScript
+date: '2021-11-27 17:30:20'
+slug: random
+abstract: 生成一个范围内的随机数。我们都希望 Math.random 工作的方式。
+isPublished: true
+---
+
+```javscript
+const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+```
+
+在 JavaScript 中，经常使用 `Math.random()` 函数生成随机数。不幸的是，这个函数只生成 0 到 1 之间的浮点数。但是生产 0 到 20 等等范围之间的随机数是非常见。
+
+## 用法
+```javscript
+// 从 [10, 14) 中获取一个随机数
+random(10, 14);
+
+// 从 [10, 101) 中获取一个随机数
+random(1, 101);
+
+// 从 [-10, 11) 中获取一个随机数
+random(-10, 11);
+```
+
+## 解释
+其实解释起来很简单，比如我们需要生成一个 [1, 4) 之间的随机数，那么我们可以这样去写：
+```javscript
+const MIN = 1;
+const MAX = 4;
+
+// 计算差值
+const DELTA = MAX - MIN;
+
+// 随机数范围 [0, 0.999999)
+const initialRandom = Math.random();
+
+// 乘以我们的 DELTA 3.
+// 随机数范围 [0, 2.999999)
+const multiplied = initialRandom * DELTA;
+
+// 我们 Math.floor 通过向下舍弃
+// 随机数范围 [0, 3)
+const floored = Math.floor(multiplied);
+
+// 设置我们的最小数
+// 随机数范围 [1, 4)
+const answer = floored + MIN;
+```
+最后我们将上面代码整合就变成了：
+```javascript
+const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+```

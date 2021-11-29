@@ -75,6 +75,7 @@ const Footer = styled.div`
 `;
 const Dot = styled.span`
   margin: 0 0.2rem;
+  font-weight: bold;
   &:after{
     content: "·";
   }

@@ -15,7 +15,7 @@ const BlogPost = ({
 
 export async function getStaticProps({ params }) {
   const { slug } = params;
-  const content = await getPostContent(slug);
+  const content: any = await getPostContent(slug);
   const mdx = await serialize(content.abstract + '<br /><br />' + content.content);
 
   return {

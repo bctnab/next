@@ -5,19 +5,17 @@ import {
   COLOR_SWAP_TRANSITION_DURATION,
 } from '../colors';
 
-import Sticky from '../components/Sticky/Sticky';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import Spacer from '../components/Spacer/Spacer';
-import TopCategories from '../components/Card/TopCategories';
-import AuthorContent from '../components/Card/AuthorContent';
-import PopularContent from '../components/Card/PopularContent';
 import MaxWidthWrapper from '../components/MaxWidthWrapper/MaxWidthWrapper';
 
 const StandardLayout = ({
-  populars,
-  categories,
-  children,
+  mainContent,
+  rightContent,
+}: {
+  mainContent: any,
+  rightContent?: any
 }) => {
   return (
     <Wrapper>
@@ -28,15 +26,11 @@ const StandardLayout = ({
       </HeaderWrapper>
       <Main>
         <MainCol>
-          {children}
+          { mainContent }
         </MainCol>
-        <RightCol>
-          <AuthorContent />
-          <Sticky top="1.5rem">
-            <PopularContent data={ populars } />
-            <TopCategories data={ categories } />
-          </Sticky>
-        </RightCol>
+        {
+          rightContent && <RightCol>{ rightContent }</RightCol>
+        }
       </Main>
       <Spacer size="96" />
       <Footer />

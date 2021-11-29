@@ -1,8 +1,8 @@
 ---
 title: 我的博客的建立
 categorie: 创作集
-date: 2021-11-17 09:19:15
-slub: my-blog
+date: '2021-11-17 09:19:15'
+slug: my-blog
 preview: https://img.bplink66.com/2021/11/24/4g3bi5do62.png
 abstract: 了解这篇博客背后的技术堆栈，我们将明白 Next.js 界面的渲染，以及如何使用 MDX 解析 Markdown 内容，并在文章中添加自定义组件，以及我如何组织我的代码库等等。
 isPublished: true
@@ -99,7 +99,7 @@ function Homepage({ newestContent, popularContent }) {
 }
 export async function getStaticProps() {
   const newestContent = await getLatestContent({ limit: 20 });
-  const popularContent = await getPopularContent({ limit: 10 });
+  const popularContent = await getPopularBlogs({ limit: 10 });
   return {
     props: { newestContent, popularContent },
   };

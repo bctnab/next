@@ -1,0 +1,46 @@
+---
+title: useToggle
+categorie: React Hook
+date: '2021-11-27 18:20:12'
+slug: use-toggle
+abstract: React.useState 封装的语法糖，可以非常方便与打开和关闭布尔值。
+isPublished: true
+---
+
+```
+import React from 'react';
+
+export default function useToggle(initialValue = false) {
+  const [value, setValue] = React.useState(initialValue);
+  const toggle = React.useCallback(() => {
+    setValue(v => !v);
+  }, []);
+
+  return [value, toggle];
+}
+```
+有时我们需要一个 React 状态应该始终保持一个布尔值，并且应该只允许在 true 和 false 之间切换。
+
+此时如果只是使用 `useState` 进行封装其过于单薄。它承载了更大的语义意义，并​​防止我们将来不小心设置非布尔值。
+
+## 用法
+```javascript
+const App = () => {
+  const [isOn, toggleIsOn] = useToggle();
+
+  return (
+    <>
+      {isOn?'灯亮了!':'嘿，谁关灯了!'}
+      <button onClick={toggleIsOn}>
+        Press me
+      </button>
+    </>
+  )
+}
+```
+该钩子的作用便是，使我们不必添加重复的逻辑，使我们逻辑可以统一处理。
+
+## useCallback
+`React.useCallback` 用于保存 setter 函数的引用；如果没有这个包装器，该 `toggle` 函数将在每次渲染时重新创建。
+
+虽然在实践中，大多数情况下这可能不会成为一个巨大的性能问题，但是为了通用和可重用等方面考虑，加上去并没有什么坏处。
