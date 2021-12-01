@@ -3,3 +3,16 @@ react react-next
 node express koa
 mongo
 docker
+
+echarts:
+setOption
+getOption
+refresh
+clear
+dispose
+
+d3.js:
+create
+axisTop
+select
+selectAll

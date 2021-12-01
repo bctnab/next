@@ -1,0 +1,126 @@
+---
+title: JS 中 this 机制
+categorie: 技术向
+date: '2021-11-30 19:22:11'
+slug: javascript-this
+abstract: this 是一个神奇的指针，它既不指向函数自身，也不指函数的词法作用域。它实际是在函数被调用时才发生的绑定，也就是说 this 具体指向什么，取决于你是怎么调用的函数。
+isPublished: true
+tags:
+  - JavaScript
+---
+
+## 默认绑定
+即使我们没有绑定任何规则，其也有着默认的规则。
+```javascript
+function foo() {
+  console.log(this.a);
+}
+var a = 3;
+foo();
+```
+不出所料，得出的数据应该为 3。
+
+这是由于由于我们没有指定相应规则，所以使用了默认的绑定，将全局对象绑定 this 上，所以 this.a 就解析成了全局变量中的a，即 3。
+
+当然上述代码在严格模式下是不能够执行的，**在严格模式下（strict mode），全局对象将无法使用默认绑定**。
+```javascript
+"use strict";
+function foo() { 
+  console.log(this);
+}
+foo();
+// undefined
+```
+## 隐式绑定
+当函数的调用是在某个对象上触发的，即调用位置上存在上下文对象。
+```javascript
+function foo() {
+  console.log(this.a);
+}
+var a = 2;
+var obj = { 
+  a: 3,
+  foo: foo 
+};
+foo();
+```
+得出的结果为 3。
+这是由于 foo 函数调用时存在上下文对象 obj，所以 this 进行了隐式绑定，也就是将 obj 绑定至 this 上，所以 this.a 得出的结果为 3。
+### 隐式丢失
+先看下这一段代码：
+```javascript
+function foo() {
+  console.log(this.a);
+}
+var a = 2;
+var obj = { 
+  a: 3,
+  foo: foo 
+};
+var b = obj.foo;
+b();
+```
+此时的结果为 2，并**不**是 3。
+我们把 obj.foo 定义为一个整体 b，当调用时会进行隐式绑定，也就是将全局对象当作 this 进行绑定，而在整个函数执行过程中，没有调用 obj 相关的参数，所以最后得出的结尾为 2。
+### 显示绑定
+相比于前面的绑定，由用户自定义的绑定就显得很容易理解了。可以通过 `call` 或者 `apply` 进行实现。
+```javascript
+function foo() {
+  console.log(this.a);
+}
+var a = 2;
+var obj = { 
+  a: 3
+};
+foo();
+foo.call(obj);
+foo.apply(obj);
+```
+输出的结尾为 2 3 3，从结果看来我们的对象，已正确的绑定到了函数中的 this 上。
+## new
+new 是 JS 中推出的操作符，和其他语言中的作用基本相似，目的便是为了创建一个对象，在 JS 中其也是一种 Function 的语法糖。
+
+使用 new 创建的对象，this 指向对象本身。
+```
+function foo(a) { 
+  this.a = a;
+}
+var a = 2;
+var foo1 = new foo(3);
+console.log(foo1.a)
+```
+得出的结果也一定为 3.
+
+这也是比较容易理解的一种绑定方式，其都是绑定对象本身。
+
+## 例外
+### 数据为空
+使用 `call` 或 `apply` 可以轻易实现绑定，那么如果我们传入空呢？
+```javascript
+var a = 2;
+function foo() { 
+  console.log(this.a);
+}
+foo.call(null);
+foo.apply(undefined);
+```
+这种情况下得出的结果都为 2。
+当我们传入的数据为空时，代表着用户并不关心 this 具体绑定的对象，所以此时会进行默认绑定，所以结果得到的都为 2。
+### 箭头函数
+箭头函数是 ES6 提出的一个新的 function 书写形式，其和普通函数区别便为：**箭头函数本身并不具备 this 指针**。
+```javascript
+var obj = { 
+  a: 3,
+  foo: () => {console.log(this.a)}
+};
+var a = 2;
+
+obj.foo();
+obj.foo.call(obj);
+```
+我们得出的结果都是 2。
+
+主要是由于箭头函数，并没有 this 相关的指针，所以即使我们强制绑定，任何不具有任何作用，在箭头函数中，this 永远是继承父级中的 this 指向。
+
+## 结尾
+this 是 js 项目中比较有意思的一个定义，开发过程中使用率也非常高，如果一不小心，很容易造成一些奇怪的 bug。
