@@ -9,3 +9,179 @@ isPopular: true
 tags:
   - JavaScript
 ---
+
+## 数据类型
+截止最新的 [ECMAScript 2021](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) 规范，js 中常用的数据类型有 9 种：
+- 6 种基本数据类型，可以使用 [ typeof ](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof) 查看具体数据类型：
+  - undefined：`typeof instance === "undefined"`
+  - boolean：`typeof instance === "boolean"`
+  - number：`typeof instance === "number"`
+  - string：`typeof instance === "string"`
+  - bigint：`typeof instance === "bigint"`
+  - symbol：`typeof instance === "symbol"`
+- null：`typeof instance === "object"`
+- object：`typeof instance === "object"` 
+- function：`typeof instance === "function"` 
+
+虽然我们可以使用 `typeof` 来确定数据类型，但是由于 JS 是弱文本标记语言，所以其类型也并不是固定的，比如这种代码经常会遇到：
+```javascript
+var a = "hello";
+a = 123;
+```
+所以对于 JS 中的数据我们应该小心处理，否则会造成意想不到的错误。
+
+由于 `typeof` 只能检测基本的数据类型，对于对象类型只能返回 object 或 function，这显然不是我们需要的，那么我们还有那些方法来帮助我们判断 JS 中的数据类型呢？
+### instanceof
+`instanceof` 中的所有检测都是基于 *原型链* 运作，所以任何基本数据类型都不能使用此方法，其会检测对象的 * 原型链* 上是否包含着我们某个构造函数的 * 原型对象*。
+
+比如下面的代码：
+```javascript
+console.log([] instanceof Array); // true
+console.log(/abc/ instanceof RegExp); // true
+console.log({} instanceof Object); // true
+console.log(function() {} instanceof Function); // true
+```
+### constructor
+任何对象之中都包含着一个 `constructor` 属性，其作用为用于实例化该对象，`constructor` 的值永远是**创建该对象的函数**。
+
+听着似乎很难理解，我们看下下面代码：
+```javascript
+var o = new Object();
+console.log(o.constructor === Object); // true
+var list = new Array();
+console.log(list.constructor === Array); // true
+```
+### hasOwnProperty
+用于判断属性，是否在当前对象实例中（不包含原型对象）。
+
+比如下面代码：
+```javascript
+const info = { title: "书", name: "大白" };
+console.log(info.hasOwnProperty("title")); // true
+console.log(info.hasOwnProperty("toString")); // false
+```
+可以看出，只有对象上存在该属性，才会返回 true，否则即使原型对象包含，其依然为 false。
+
+## 堆栈内存空间
+既然已经明白数据类型，那么接下来我们看下堆、栈内存空间。
+
+### 栈内存空间
+既然是栈内存空间，那么在内存中的数据结构也肯定是以栈的形式存储。
+那么 **栈** 具有下面的几个特点：
+- 先进后出，最先进栈的往往最后出现。
+- 访问栈底元素，必须拿掉它上面的元素。
+
+我们可以绘制下面一图来描述栈的执行过程：
+
+![](https://img.bplink66.com/2021/12/02/p0xokm24yb.png)
+
+### 堆内存空间
+同样的，堆内存空间中的数据结构也肯定是以堆的形式存储。
+
+在通常的情况下，我们所说的 **堆** 数据结构指的是 **二叉堆**，它具有下面一些特点：
+- 它是一颗完全二叉树。
+- 二叉堆不是最小堆就是最大堆。
+
+## 变量类型与堆栈内存的关系
+### 基本数据类型
+JS 中基本的数据类型有 7 种，`string`、`number`、`boolean`、`null`、`undefined`、`symbol`、`bigInt`，这些基础类型的变量都会保存在`栈内存`中，因为基本数据类型占用空间小、大小固定，会被频繁的使用。
+
+比如我们有下面几行代码：
+```javascript
+let name = "Bcheng";
+let age = 24;
+```
+简单的定义了两个变量，并且类型都是基础数据类型。
+
+我们就可以使用下图来描述它在栈内存的存储：
+
+![](https://img.bplink66.com/2021/12/02/2n17xhcopbg.png)
+
+> 注意：闭包中的基本数据类型变量也是保存在堆内存中，当闭包内的函数执行时，返回一个内部函数的一个引用，此时函数的变量就会转移到堆上，因此内部函数依然能访问到上一层函数的变量。
+
+### 引用数据类型
+JS 中除了上面所描述的基本数据类型，还包含着引用数据类型，例如：`Array`、`Function`、`Object`...。
+
+这些引用数据类型都会存储在堆内存中，引用数据类型占据空间大、大小不固定，如果存储在栈中，将影响程序的运行性能。
+
+引用数据类型除了在堆内存中存储对象外，还会在栈中存储一个指针，这个指针指向堆内存空间中该实体的起始地址。当我们需要调用对象时，解释器会先检索其在栈中的地址，取得地址后，从堆中获得实体。
+
+比如我们有着下面的代码：
+```javascript
+let name = "Bcheng";
+let age = 24;
+let info = null;
+let obj = {message: "hello", id: 1};
+let list = [1, 2, 3];
+```
+在上面代码中：
+1. 主要定义了两个对象 `obj`、`list` 他们的值都是引用类型（object、array）。
+2. 堆内存空间采用 `二叉堆` 的结构，将 `obj` 和 `list` 都存储进堆内存中。
+3. 存储完成后，堆内存空间会返回这两个指针，指向对象引用地址。
+4. 得到引用地址后，将地址与变量名称对应起来，存放在栈内存空间中。
+5. 当获取 `obj`、`list` 的值时，会先从栈内存空间中获取它的引用地址。
+6. 获取到引用地址后，通过引用地址在堆内存空间的二叉堆中查找到对应的值。
+
+## 数据复制
+### 基本数据类型的复制
+比如我们有着下面的代码：
+```javascript
+let name = "hello";
+let alias = name;
+alias = "world";
+```
+上面变量都是基本类型，它们的值都存储在栈内存。并且相互之间都没有影响，所以我们修改 `alias` 的值，对于 `name` 来说没有任何影响。
+
+我们可以画个图如下所示：
+
+![](https://img.bplink66.com/2021/12/02/120u47boc09.png)
+
+### 引用数据类型的复制
+基本数据复制起来很简单，那么引用数据类型的复制如何呢？代码如下所示：
+```javascript
+let book = {title: "史记", id: 12};
+let info = book;
+info.title = "历史";
+```
+上述代码定义了两个变量`book`、`info`，它们的值都存在堆内存，指针存储在栈内存之中。但是复制之后，指针并未改变，它们都指向同一快堆内存中，所以修改一个，另外一个也会改变。
+
+我们画个图来描述下：
+
+![](https://img.bplink66.com/2021/12/02/6m2qfnomlr.png)
+
+## 深拷贝与浅拷贝
+通过上面代码我们明白，引用数据类型在复制时，改了其中一个数据的值，另一个数据的值也会跟着改变，这种拷贝方式我们称为 **浅拷贝**。
+
+但是这明显不符合我们的需求，我们希望引用类型复制到新的变量后，二者是独立的，不会因为一个的改变而影响到另一个。这种拷贝方式就称为 **深拷贝**。
+
+深拷贝，实际上就是重新在 **堆内存** 中开辟一块新的空间，把原对象的数据拷贝到这个新地址空间里来，通常来说，我们有两种方法：
+1. 通过 JSON 转换一遍，会得到新的一个对象，但是不能转换function、undefined等类型的数据(但这类型数据，一般也不需要转换)。
+2. 手动去循环遍历所有属性。
+
+我们使用第一种方法，代码可以这些去写：
+```javascript
+let book = {title: "史记", id: 12};
+const obj = JSON.parse(JSON.stringify(book));
+obj.age = 24;
+
+console.log("book=", book);
+console.log("obj=", obj);
+```
+从得出的结果来看，`book` 和 `obj` 两者相互独立，相互之间没有什么影响。
+
+最后，我们来看下第二种写法，代码如下所示：
+```javascript
+let book = {title: "史记", id: 12};
+const obj = {};
+Object.keys(book).map(item => {
+  obj[item] = book[item];
+});
+obj.age = 24;
+
+console.log("book=", book);
+console.log("obj=", obj);
+```
+得出的结果也是同样，`book` 和 `obj` 两者相互独立，相互之间没有什么影响。
+
+## 参考资料
+- [深入理解js数据类型与堆栈内存](https://juejin.cn/post/6942880039897825294#heading-19)
