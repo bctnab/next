@@ -51,7 +51,7 @@ export async function getPopularBlogs() {
     return (item.isPublished === true && item.isPopular === true);
   });
 
-  return posts;
+  return sortPosts(posts, undefined);
 }
 // post time axis
 export async function getPostTimeAxis() {
