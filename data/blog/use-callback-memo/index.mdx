@@ -1,0 +1,145 @@
+---
+title: useCallback() 和 useMemo()
+categorie: 技术向
+date: '2021-12-01 08:41:43'
+slug: use-callback-memo
+abstract: 不管是 useCallback 还是 useMemo 都是 React Hook 中推出的新的方法，它们的目的也都很明确，减少组件占用空间，优化项目响应速度。
+isPublished: true
+tags:
+  - React
+  - React Hook
+---
+
+## React.memo
+在学习上面两个方法时，我们先看下 `memo` 这个方法如何使用，以及其它的具体作用。
+普通的组件我们这样去定义和使用：
+```jsx
+// 子组件
+function Children () {
+  console.log('Children render ...');
+  return (
+    <div>Children render ...</div>
+  )
+}
+
+// 父组件
+function Parent () {
+  const [count, setCount] = useState(0);
+  const handleClick = () => setCount(count + 1);
+
+  return (
+    <div>
+      <button onClick={handleClick}>点击次数：{count}</button>
+      <Children />
+    </div>
+  );
+}
+```
+很简单的两个组件，每当自组建渲染时，都会执行 console 打印一句话。
+当父组件数据改变时，即使子组件数据没有任何变化，也会重新渲染，所以控制台输出的信息也很显而易见了：
+
+![](https://img.bplink66.com/2021/12/02/ujft0g7byz.png)
+
+和我们想象基本一样，由于父组件的更新，导致子组件也进行了不必要的更新。
+
+## 解决
+既然出现问题那么就要去解决，首先由于是函数组件，所以不具备 `shouldComponentUpdate` 生命周期，而 React 为了解决问题便推出了 `memo`。
+
+将子组件代码修改为：
+```jsx
+import React, { memo } from 'react';
+	
+let Children = function() {
+  console.log('Children render ...');
+  return (
+    <div>Children render ...</div>
+  )
+}
+Children = memo(Children);
+```
+当再次父组件中状态时，子组件便不会再进行不必要的渲染：
+
+![](https://img.bplink66.com/2021/12/02/hu676zpvge.png)
+
+问题得以解决。
+
+## React.useCallback
+千万不要以为问题至此就结束了，我们看下面的代码：
+```jsx
+import React, {memo, useState} from 'react';
+
+// 子组件
+let Children = function ({ name, onClick }) {
+  console.log('Children render ...');
+  return <>
+    <div>Children name... {name}</div>
+    <button onClick={() => onClick('hello')}>改变 name 值</button>
+  </>
+};
+Children = memo(Children);
+
+// 父组件
+function Parent () {
+  const [count, setCount] = useState(0);
+  const handleClick = () => setCount(count + 1);
+
+  const [name, setName] = useState('hello world');
+  const changeName = (newName) => setName(newName);
+
+  return (
+    <div>
+      <button onClick={handleClick}>点击次数：{count}</button>
+      <Children name={name} onClick={changeName} />
+    </div>
+  );
+}
+```
+最后打印出下面结果：
+
+![](https://img.bplink66.com/2021/12/02/1i2mfut79id.png)
+
+我们发现，即使我们已经使用了 `memo` 但，父组件状态更新，依旧导致了子组件进行了不必要的渲染，那么这是为什么呢？`memo` 失效了，还是 bug？？？
+其实 `memo` 既没有失效，也不是 bug，我们分析下造成问题的原因：
+1. 父组件状态更新，导致了父组件进行了重新的渲染。
+2. 由于父组件的重新渲染，导致了父组件中的 * changeName* 方法被重新创建，这就导致了子组件中的 `memo` 认为状态发生了变化，导致子组件进行了更新。
+
+这样就能解释通为什么造成这种现象了，但是这明显不是我们要的效果，既然已经明白我们该怎么修改呢？
+这是我们便需要 React 推出的另外一个方法 `useCallback` 了，其他代码原封不动，我们修改 * changeName* 方法的定义：
+```javascript
+const changeName = useCallback((newName) => setName(newName), [])
+```
+这样即使父组更新，也都无法导致子组件进行不必要的渲染了，问题得以解决。
+
+`useCallback` 方法起到了缓存函数的作用，即使父组件重新渲染了，由于 `useCallback` 原因方法也不会重新创建，只有其第二个数组参数状态发生改变，其中的函数才会重新创建。
+
+## React.useMemo
+如上所见 `useCallback` 作用是缓存函数，那么 `useMemo` 是用来做什么的呢？
+
+我们在父组件代码中添加下面几行代码：
+```jsx
+function Parent () {
+  ...
+  const [name, setName] = useState('hello world');
+  const [age, setAge] = useState(24);
+  const info = {name, age};
+
+  return (
+    <div>
+      <button onClick={handleClick}>点击次数：{count}</button>
+      <Children info={info} onClick={changeName} />
+    </div>
+  );
+}
+```
+这样一旦父组件重新渲染，子组件也会跟着重新渲染，造成问题的原因和上面的一样：由于父组件重新渲染，导致其中的 *info* 对象，重新创建，也就导致子组件认为数据发生了变更，进行了重新渲染。
+
+那么既然 `useCallback` 可以用来缓存函数，那么有没有一个方法可以用来缓存对象的呢？
+
+这就需要 `useMemo` 来完成了，它的使用方式和上面的 `useCallback` 基本相似，我们修改父组件中对象定义时的代码：
+```javascript
+const info = useMemo(() => ({ name, age }), [name, age])
+```
+最后从打印结果可以看出问题得以解决。
+
+## 结尾
+不管是 [usememo](https://reactjs.org/docs/hooks-reference.html#usememo) 还是 [usecallback](https://reactjs.org/docs/hooks-reference.html#usecallback) 在 React 官网都有着详细的介绍，它们都属于性能优化，我们不应该在里面添加任何副作用函数，** 其只是作为性能优化，而不是作为语义保证。**
