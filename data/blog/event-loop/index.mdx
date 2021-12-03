@@ -1,0 +1,141 @@
+---
+title: JS 引擎的执行机制
+categorie: 技术向
+date: '2021-12-02 15:45:24'
+slug: event-loop
+abstract: 了解 JS 执行机制之前，我们先进行灵魂三问：JS为什么是单线程？为什么需要异步操作？单线程如何实现异步呢？JS 中的 Event Loop 是什么呢？带着这些问题，我们开始阅读下面内容。
+isPublished: true
+isPopular: true
+tags:
+  - JavaScript
+---
+
+## 牢记两点
+无论任何情况，下面两点都不会改变：
+1. JS 任何情况下都是单线程语言。
+2. JS 中的 Event Loop 表示其执行的机制。深入了解 JS 的执行，就等于深入了解 JS 里的 event loop。
+
+## JS为什么是单线程？
+由于 JS 是用来在浏览器控制一些 DOM 的操作的一门脚本语言，如果 JS 是多线程，那么两个线程同时对一个 DOM 进行相互冲突的操作，那么浏览器将无法去执行。所以 JS 只能是单线程的
+
+## 为什么需要异步?
+如果 JS 中不存在异步，代码自上而下执行，如果一些请求消耗时间过长，那么下面的代码就会被阻塞，对于用户而言,阻塞就意味着 "卡死"，这样就导致了很差的用户体验。
+
+## 单线程又是如何实现异步的呢?
+由于 JS 是一门单线程语言，所以代码中所有的异步以及多线程都可以理解为一种 “假象”。而实现这种 “假象” 便是依靠 `Event Loop` 来实现，所以理解 `Event Loop` 的机制就理解了异步执行机制。
+
+## event loop
+我们先不管 `event loop` 意味着什么，先观察下面代码会输出什么内容？
+```javascript
+console.log(1);
+
+setTimeout(function(){
+  console.log(2)
+}, 0)
+
+console.log(3)
+```
+最后输出结果为：1 3 2。
+
+可以看出 *setTimeout* 中的代码并没有立即去执行，而是延迟了一段时间，当满足一定条件后，才去执行，而这种类型代码我们便称之为异步代码。
+
+所以我们可以将我们任务根据执行顺序分为两大部分：**同步任务** 和 **异步任务**。
+
+可以粗浅的得出执行机制为：
+1. 判断代码是同步还是异步，同步则进入主线程，异步进入 event table。
+2. 异步代码在 event table 中注册相应的函数，当满足触发条件后，推入 event queue。
+3. 主线程代码自上而下一直执行，直到主线程空闲时，才会去 event queue 中查看是否有可执行的异步任务，如果有就推入主线程中。
+
+上面几个步骤便是 event loop，JS 便可以通过上面的步骤去实现一个 "异步"。
+
+## 微任务和宏任务
+对于 event loop 以及有了简单的理解，那么我们看下下面代码：
+```javascript
+setTimeout(function(){
+  console.log('setTimeout');
+}, 0);
+
+new Promise(function(resolve){
+  console.log('Promise');
+  resolve();
+}).then(function(){
+  console.log('Promise then');
+});
+ 
+console.log('main');
+```
+如果按照上面的逻辑分析：
+1. setTimeout 是异步操作，进入 event table。
+2. new Promise 是同步操作，代码会被执行，但 then 属于异步函数，同样被挂载到 event table 中。
+3. 最后的 console.log 为主线程代码，被立即执行。
+
+所以根据分析得出的结果因该为：「Promise -> main -> setTimeout -> Promise then」。
+
+但是最后我们会得出另外一个结果：「Promise -> main -> Promise then -> setTimeout」。
+
+可以看出异步任何除了前后执行顺序，似乎还有着其他的规定。
+
+事实上按照异步和同步的划分方式，并不准确，而准确的划分方式是：
+- 宏任务：整个脚本代码script，setTimeout，setInterval。
+- 微任务：Promise，process.nextTick。
+
+![](https://img.bplink66.com/2021/12/03/1okknpobbwt.png)
+
+按照这种方式，那么执行机制为：
+- 从宏任务开始执行，如果遇到宏任务异步操作，将其放到宏任务的【事件队列】里，如果遇到微任务，就将其放到微任务的【事件队列】里。
+- 当前宏任务执行完成后，会查看微任务的【事件队列】，将里面全部的微任务依次执行完，然后开启下一轮任务，重复上述步骤。
+
+这样我们依靠刚学的执行机制，上面的例子：
+1. 首先执行 script 宏任务，遇到 setTimeout，将其放置到宏任务的【事件队列】中。
+2. 之后执行到 new Promise，会被执行，但其中的 then 方法属于微任务，将其放到微任务的【事件队列】中。
+3. 最后一行代码 console.log('main') 被执行。
+4. 本轮宏任务执行完毕，判断是否有微任务，发现有一个 then 方法，微任务执行。
+5. 第一轮 event loop 执行完毕，开启下一轮宏任务，setTimeout 里的函数被执行。
+
+所以我们得出的顺序为：「Promise -> main -> Promise then -> setTimeout」。
+
+## setTimeout
+`setTimeout` 在开发中算是比较常用的函数，那么方法中的 delay 具体表示什么意思呢？比如下面代码：
+```javascript
+setTimeout(function(){
+  console.log('setTimeout');
+}, 1000);
+```
+经过上面的分析，准确的解释是，1s 后将 setTimeout 中的函数推入到 event queue，但 event queue 并不会立即出发，只会等到主线程空闲时才会执行。
+
+所以 setTimeout 在有时会显得并不是那么准时。
+
+## 工具
+工欲善其事，必先利其器。听过上面的分析您大致清楚了 event loop 机制，但是这些都是浏览器内部执行，开发人员并看不到，为了更好的理解相关执行机制，推荐一个可视化网站：[latentflip.com](http://latentflip.com/loupe)，这对我们有着很大的帮助。
+
+作者的视频介绍：[youtu.be/8aGhZQkoFbQ](https://youtu.be/8aGhZQkoFbQ)
+
+如果没有办法科学上网，也没太大影响，界面结构很简单：
+
+![](https://img.bplink66.com/2021/12/03/2pzk7lzjuv8.jpeg)
+
+我们可以分析下其给出的默认代码：
+```javascript
+$.on('button', 'click', function onClick() {
+  setTimeout(function timer() {
+    console.log('You clicked the button!');    
+  }, 2000);
+});
+
+console.log("Hi!");
+
+setTimeout(function timeout() {
+  console.log("Click the button!");
+}, 5000);
+
+console.log("Welcome to loupe.");
+```
+1. $.on 绑定事件，宏任务会被执行。
+2. 然后执行到 console.log("Hi!") 同样被执行。
+3. setTimeout 属于异步，将其放置到宏任务的【事件队列】中。
+4. 最后一行代码 console.log("Welcome to loupe.") 会被立即执行。
+5. 宏任务执行完毕，但并没有微任务，所以开启下一轮宏任务，setTimeout 中的函数会被执行。
+
+所以得出的结果很明显：「Hi! -> Welcome to loupe. -> Click the button!」。
+
+流程很简单，重要的是其为我们提供了可视化的执行界面，我们可以将上面例子的代码复制进去，查看执行流程是否与我们预想中的一致。
