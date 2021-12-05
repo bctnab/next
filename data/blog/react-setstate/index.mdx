@@ -8,3 +8,247 @@ isPublished: true
 tags:
   - React
 ---
+
+## 前言
+我们先看下面一段代码：
+```javascript
+for ( let i = 0; i < 100; i++ ) {
+  this.setState({
+    num: this.state.num + 1
+  });
+}
+```
+如果我们组件中有类似这种代码，导致组件重新渲染 100 次，那么这对性能来说是一个非常大的负担。
+
+## React如何避免这种情况
+React显然不会忽略这种程度上的问题，所以其对 setState 做了一些特别的优化：React 会将多个 setState 的调用合并成一个来执行，这就意味着当调用 setState 时，并不会立即触发更新。
+
+那么何以见得呢？我们将上面的例子，复制到 React 组件中，得出下面代码：
+```javascript
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      num: 0
+    }
+  }
+  componentDidMount() {
+    for (let i = 0; i < 100; i++) {
+      this.setState({ num: this.state.num + 1 });
+    }
+  }
+  render() {
+    console.log(this.state.num);
+    return (
+      <div className="App">
+        <h1>{this.state.num}</h1>
+      </div>
+    );
+  }
+}
+```
+很简单的一个组件，我们利用 `componentDidMount` 钩子，在组件挂载后，会循环 100 次调用 setState，每次都让 **num** +1，但是真正的执行起来，我们会得出下面的结果：
+
+![](https://img.bplink66.com/2021/12/05/1qn0ggurnt8.png)
+
+可以看出 **num** 最后的值为1，并且组件中的 render 方法只被调用两次，也就是说组件只重新渲染了 1 次。
+
+可以看出 React 的确对 setState 进行了优化，虽然这也导致了不符合常理的事情发生，比如我们逻辑就是上面的代码，但 React 却不能实现，所以针对这种情况，React 给出了另一种解决方案：setState 不仅可以接收参数，还可以接收一个函数，函数中我们可以获取先前的状态，并通过这个函数的返回值计算出下一个状态。
+
+比如我们将上面代码中 `componentDidMount` 钩子中的函数修改为：
+```javascript
+componentDidMount() {
+  for ( let i = 0; i < 100; i++ ) {
+    this.setState( prevState => {
+      console.log( prevState.num );
+      return {
+        num: prevState.num + i
+      }
+    });
+  }
+}
+```
+我们会得出下面的结果：
+
+![](https://img.bplink66.com/2021/12/05/29xrw1djah8.png)
+
+可以看出在函数的帮助下，setState 的确和预期一样工作了，那么我们就可以简单分析出 setState 主要下面两功能：
+1. 异步更新 state，并将短时间内的多个 setState 合并为 1 个。
+2. 为了解决异步更新导致的问题，setState 参数不仅需要接受数据，还需要可以接收一个函数当作参数，函数可以得到前一个状态并返回下一个状态。
+
+## 合并setState
+如果我们不考虑 setState 的异步，只是简单的合并可以写出下面代码：
+```javascript
+setState(newState) {
+  Object.assign(this.state, newState);
+  render(this);
+}
+```
+这种方式的实现，我们每次调用 setState 都会更新 state 并马上渲染一次，这明显不是我们想要的，所以我们要想办法合并 setState。
+### setState队列
+既然需要合并 setState，我们首先需要一个队列来保存每次 setState 的数据，然后在一段时间后执行合并操作和更新 state，并清空这个队列，然后渲染组件。
+```javascript
+// 用于模仿队列效果
+const queue = [];
+
+// 该方法作用便是天津队列数据，不进行其他任何操作
+function enqueueSetState(newState, component) {
+  queue.push({
+    newState,
+    component
+  });
+}
+```
+最后修改我们的 setState 方法，不再直接合并 state 和渲染组件，而是添加进更新队列。
+```javascript
+setState(newState) {
+  enqueueSetState(newState, this);
+  this.forceUpdate();
+}
+```
+既然队列已经实现了，接下来便需要清空队列并渲染组件了。
+### 清空队列
+由于我们是模仿队列的操作，它的特点是 "先进先出"，那么我们便需要从数组顶部开始提取元素，这就需要用到了 `shift` 方法。
+
+我们实现一个 flush 方法用于清空队列：
+```javascript
+function flush() {
+  let item;
+
+  // 迭代
+  while( item = setStateQueue.shift() ) {
+    const {newState, component} = item;
+
+    // 初始化函数中的 prevState 参数
+    if ( !component.prevState ) {
+      component.prevState = Object.assign({}, component.state);
+    }
+
+    // 参数是一个方法
+    if (typeof newState === 'function') {
+      Object.assign(component.state, newState(component.prevState, component.props));
+    } else {
+      Object.assign(component.state, newState);
+    }
+
+    // state 改变，prevState 重新赋值
+    component.prevState = component.state;
+  }
+}
+```
+这样我们的 state 更新的逻辑便完成了，接来下我们需要开始渲染组件了，首先渲染组件不能在遍历队列时进行，因为同一个组件可能会多次添加到队列中，我们需要另一个队列保存所有组件，不同之处是，这个队列内不会有重复的组件。
+
+所以我们可以修改刚才实现的 `enqueueSetState` 函数：
+```javascript
+const queue = [];
+const renderQueue = [];
+
+function enqueueSetState(newState, component) {
+  queue.push({
+    newState,
+    component
+  });
+
+  // 避免重复
+  if ( !renderQueue.some(item => item === component) ) {
+    renderQueue.push(component);
+  }
+}
+```
+最终我们在 `flush` 方法中，state 更新完毕后，我们执行 `forceUpdate` 方法强行去更新每个组件。
+```javascript
+function flush() {
+  let item, component;
+  while( item = queue.shift() ) {
+    // ...
+  }
+
+  // 渲染
+  while(component = renderQueue.shift()) {
+    component.forceUpdate();
+  }
+}
+```
+### 延迟执行
+通过前面的努力，所需的方法已经实现完成了，接下来还剩下至关重要的一点：`flush` 什么时候执行。
+
+我们需要间隔一定的时间合并所有的 setState，也就是在一段时间后才执行 `flush` 方法来清空队列，那么这个 “一段时间“ 怎么决定。
+
+其实这一点，我们只需依靠 js 中的 [event loop](/event-loop) 便能轻易的实现，具体这里就不多说了。核心思路就是通过将我们的 `flush` 方法修改为异步执行，从来确保，主进程代码以执行完毕，执行修改的方法有很多Promise、setTimeout都能实现。
+
+那么我们继续修改 `enqueueSetState` 方法，我们要在 state 开始进入队列时，挂载异步的 `flush` 方法：
+```javascript
+function enqueueSetState(newState, component) {
+  // 确保只有首次挂载，避免挂载多次
+  if ( queue.length === 0 ) {
+    defer(flush);
+  }
+
+  queue.push({
+    newState,
+    component
+  });
+  if ( !renderQueue.some(item => item === component) ) {
+    renderQueue.push(component);
+  }
+}
+```
+接下来只需实现 `defer` 方法，将同步转换为异步：
+```javascript
+function defer(fn) {
+  return Promise.resolve().then(fn);
+}
+```
+这样由于 `flush` 属于微任务，所以其只会在主任务全部执行完成之后才会执行。这样就保证了所有的 setState 都会被合并，并只渲染一次组件。
+### 效果
+既然方法都已经实现完成，那么其效果如何呢？我们放在 React 组件上一试便知：
+```javascript
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      num: 0
+    }
+  }
+  componentDidMount() {
+    for ( let i = 0; i < 100; i++ ) {
+      this.setState({
+        num: 1
+      });
+    }
+  }
+  setState(newState) {
+    enqueueSetState(newState, this);
+  }
+  render() {
+    console.log(this.state.num);
+    return (
+      <div className="App">
+        <h1>{this.state.num}</h1>
+      </div>
+    );
+  }
+}
+```
+最后得出的结果基本和 React 中的 setState 一致。
+
+我们也可以穿入一个函数进行测试：
+```javascript
+componentDidMount() {
+  for ( let i = 0; i < 100; i++ ) {
+    this.setState( prevState => {
+      console.log( prevState.num );
+      return {
+        num: prevState.num + i
+      }
+    });
+  }
+}
+```
+结果同样和我们预想的一致。
+
+## 结尾
+至此我们的 setState 便已经实现完成了，当然这只是一个简略版的，真实的远比这种代码复杂，但通过上面的代码我们可以明白 setState 实现的基本思路和方式。
+
+## 参考资料
+- [react setState核心实现原理](https://zhuanlan.zhihu.com/p/44537887)
