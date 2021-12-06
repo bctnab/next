@@ -1,0 +1,162 @@
+---
+title: Redux-Saga
+categorie: 技术向
+date: '2021-12-05 21:00:14'
+slug: redux-saga
+abstract: redux-saga 是 redux 中比较常用的一款中间件，目的便是帮助我们集中处理项目中的副作用函数，使项目管理更容易。同时也使用 ES6 中的 Generator 功能，解决了 redux-thunk 中地狱回调等问题。
+isPublished: true
+tags:
+  - React
+  - Redux
+---
+
+## Saga vs Thunk
+redux-saga 与 redux-thunk 都是解决 redux 中的副作用函数，但 **背后的思想来源不同**。
+### redux-thunk
+一般情况下，都是通过发送 actions 来描述如何修改 state：
+```javascript
+{
+  type: 'ADD_TODO',
+  payload: {
+    text: 'Do something.'  
+  }
+}
+```
+这样每次执行 `dispatch(action)` 都会通知 reducer 根据 action 来去 **同步** 更新 store 中的数据。
+
+但是一个丰富的 web 应用，payload 数据往往来自于远端服务器，为了能将 **异步** 获取数据这部分代码跟 UI 解耦，而 redux-thunk 选择以 middleware(中间价) 的形式来增强 redux，从而在拥有了 **异步获取数据能力** 的同时，又可以进一步将 **数据获取相关的业务逻辑** 从 View 层分离出去。
+
+比如下面代码：
+```javascript
+// action.js
+export function fetchData(params) {
+  return (dispatch, getState) => {
+    myRequest.post("/lists", {data: params})
+      .then(response => dispatch({ type: "REQUEST_SUCCEEDED", payload: response })
+      .catch(error => dispatch({ type: "REQUEST_FAILED", error: error });
+  };
+}
+
+// component.js
+this.props.dispatch(fetchData({hello: 'saga'}));
+```
+可以看出 redux 一旦添加了 redux-thunk，我们可以定义异步的 action，最后通过 dispatch 直接发送异步 action。
+### redux-saga
+我们来看下面代码：
+```javascript
+// saga.js
+function* fetchData(action) {
+  const {payload: {data}} = action;
+
+  try {
+    const result = yield call(myRequest.post, "/lists", { data: data });
+    yield put({ type: "REQUEST_SUCCEEDED", payload: result });
+  } catch (error) {
+    yield put({ type: "REQUEST_FAILED", error: error });
+  }
+}
+// watcher saga
+// 监听指定的 action
+export function* watchFetchData() {
+  yield takeEvery('REQUEST', fetchData);
+}
+
+// component.js
+this.props.dispatch({
+  type: 'REQUEST',
+  payload: {
+    data: { hello: 'saga' }
+  }
+});
+```
+通过上面的代码，与之前的进行对比，可以归纳以下几点：
+- **数据获取相关的业务逻辑** 被转移到单独 saga.js 中，而不再掺杂在 action.js 与 component.js 中。
+- dispatch 的参数依然是一个纯粹的 action，而不是充满 “黑魔法” thunk function。
+- 每一个 saga 都是一个 generator function，采用同步书写的方式处理异步逻辑，可以使代码变得更易读。
+- 同样受益于 generator function 的 saga 实现，代码的异常处理，可以很容易的实现。
+
+## 深入学习
+首先我们要将 store 和 redux-saga 结合：
+```javascript
+import { createStore, applyMiddleware } from 'redux';
+import createSagaMiddleware from 'redux-saga';
+
+import todoSaga from './sagas';
+import todoReducer from './reducers';
+
+// saga middleware
+const sagaMiddleware = createSagaMiddleware();
+
+// 注入
+const enhancer = applyMiddleware(sagaMiddleware);
+
+// store
+const store = createStore(todoReducer, enhancer);
+
+// 启动 saga
+sagaMiddleWare.run(todoSaga);
+```
+代码分析：
+- 8L：通过指定的工厂函数(createSagaMiddleware) 创建 sagaMiddleware，创建时可以传递一些可选的[配置参数](https://redux-saga.js.org/docs/api/#createsagamiddlewareoptions)。
+- 10L~13L：创建 store 实例，并注入 sagaMiddleware。这就意味着之后每次执行 `store.dispatch` 都必须先经过 sagaMiddleware 这一中间件进行必要的 “加工处理”。
+- 16L：通过 run 方法，启动 saga，并注册 action 监听。
+
+所以综上所述：当程序启动时，通过 `run` 开启 sagaMiddleware 对 action 进行监听，当后续程序中有触发 `dispatch(action)` 时，由于数据流会经过 sagaMiddleware，所以 sagaMiddleware 能够判断当前 action 是否有被监听，如果有被监听就会对 action 进行 “加工处理”，如果没有，则什么都不做。
+
+**接下来我们看 todoSaga 具体做了些什么？**
+
+```javascript
+import { takeEvery } from 'redux-saga/effects';
+
+function* todoSaga() {
+  console.log('hello saga');
+  
+  yield takeEvery('FETCH_TODOS', function* fetchTodos() {
+    console.log('FETCH_TODOS action');
+  });
+}
+
+export default todoSaga;
+```
+最终 rootSaga 里面的代码会在程序启动时，会依次被执行：
+- 4L：控制台打出 hello saga 的欢迎语。
+- 6L~8L：使用 `takeEvery` 方法会注册一个 watcher saga，对 action 类型为 FETCH_TODOS 实施监听，如果匹配到则进行加工。
+
+到了这里 redux-saga 基本使用已经完成了，那么 redux-saga 提供了那些方法可用呢？
+
+### Effects
+前面介绍过，saga 是一个 generator function，这就意味着它的执行原理必然是下面这样：
+```javascript
+function isPromise(value) {
+    return value && typeof value.then === 'function';
+}
+
+const iterator = saga(/* ...args */);
+
+// 方法一：
+// 一步一步，手动执行
+let result;
+
+result = iterator.next();
+result = iterator.next(result.value);
+result = iterator.next(result.value);
+
+// 方法二：
+// 函数封装，自主执行
+function next(args) {
+  const result = iterator.next(args);
+  if (result.done) {
+    // 执行结束
+    console.log(result.value);
+  } else {
+    if (isPromise(result.value)) {
+      result.value.then(next);
+    } else {
+      next(result.value)
+    }
+  }
+}
+
+next();
+```
+这也就意味着，在 saga 执行完成之前，它的控制权始终掌握在** 执行者（caller）**手中，即：
