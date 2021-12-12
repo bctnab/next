@@ -17,6 +17,7 @@ const StandardLayout = ({
   mainContent: any,
   rightContent?: any
 }) => {
+  
   return (
     <Wrapper>
       <HeaderWrapper>

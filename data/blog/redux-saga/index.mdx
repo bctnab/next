@@ -24,7 +24,7 @@ redux-saga 与 redux-thunk 都是解决 redux 中的副作用函数，但 **背�
 ```
 这样每次执行 `dispatch(action)` 都会通知 reducer 根据 action 来去 **同步** 更新 store 中的数据。
 
-但是一个丰富的 web 应用，payload 数据往往来自于远端服务器，为了能将 **异步** 获取数据这部分代码跟 UI 解耦，而 redux-thunk 选择以 middleware(中间价) 的形式来增强 redux，从而在拥有了 **异步获取数据能力** 的同时，又可以进一步将 **数据获取相关的业务逻辑** 从 View 层分离出去。
+但是一个丰富的 web 应用，payload 数据往往来自于远端服务器，为了能将 **异步** 获取数据这部分代码跟 UI 解耦，`redux-thunk` 选择了以 middleware(中间件) 的形式来增强 redux，从而在拥有了 **异步获取数据能力** 的同时，又可以进一步将 **数据获取相关的业务逻辑** 从 View 层分离出去。
 
 比如下面代码：
 ```javascript
@@ -40,7 +40,7 @@ export function fetchData(params) {
 // component.js
 this.props.dispatch(fetchData({hello: 'saga'}));
 ```
-可以看出 redux 一旦添加了 redux-thunk，我们可以定义异步的 action，最后通过 dispatch 直接发送异步 action。
+可以看出 redux 一旦添加了 redux-thunk，我们可以直接定义异步的 action，最后通过 dispatch 发送。
 ### redux-saga
 我们来看下面代码：
 ```javascript
@@ -78,75 +78,151 @@ this.props.dispatch({
 ## 深入学习
 首先我们要将 store 和 redux-saga 结合：
 ```javascript
-import { createStore, applyMiddleware } from 'redux';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
 import createSagaMiddleware from 'redux-saga';
+import { createStore, applyMiddleware } from 'redux';
 
-import todoSaga from './sagas';
-import todoReducer from './reducers';
+import todosSaga from './sagas';
+import App from './ReduxSaga';
+import rootReducer from './reducers/index';
 
 // saga middleware
 const sagaMiddleware = createSagaMiddleware();
 
-// 注入
-const enhancer = applyMiddleware(sagaMiddleware);
-
 // store
-const store = createStore(todoReducer, enhancer);
+const enhancer = applyMiddleware(sagaMiddleware);
+const store = createStore(rootReducer, enhancer);
 
 // 启动 saga
-sagaMiddleWare.run(todoSaga);
+sagaMiddleware.run(todosSaga);
+
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+  document.getElementById('root')
+);
 ```
 代码分析：
-- 8L：通过指定的工厂函数(createSagaMiddleware) 创建 sagaMiddleware，创建时可以传递一些可选的[配置参数](https://redux-saga.js.org/docs/api/#createsagamiddlewareoptions)。
-- 10L~13L：创建 store 实例，并注入 sagaMiddleware。这就意味着之后每次执行 `store.dispatch` 都必须先经过 sagaMiddleware 这一中间件进行必要的 “加工处理”。
-- 16L：通过 run 方法，启动 saga，并注册 action 监听。
+- 12L：通过指定的工厂函数(createSagaMiddleware) 创建 sagaMiddleware，创建时可以传递一些可选的[配置参数](https://redux-saga.js.org/docs/api/#createsagamiddlewareoptions)。
+- 15L~16L：创建 store 实例，并注入 sagaMiddleware。
+- 19L：通过 run 方法，启动 saga，并注册 action 监听。这就意味着之后每次执行 `store.dispatch` 都必须先经过 saga 中间件进行必要的 “加工处理”。
 
-所以综上所述：当程序启动时，通过 `run` 开启 sagaMiddleware 对 action 进行监听，当后续程序中有触发 `dispatch(action)` 时，由于数据流会经过 sagaMiddleware，所以 sagaMiddleware 能够判断当前 action 是否有被监听，如果有被监听就会对 action 进行 “加工处理”，如果没有，则什么都不做。
+所以综上所述：当程序启动时，通过 `run` 开启 saga 对指定 action 的监听，当后续程序中有触发 `dispatch(action)` 时，由于数据流会经过 sagaMiddleware 处理，所以 sagaMiddleware 能够判断当前 action 是否有被监听，如果有被监听就会对 action 进行 “加工处理”，如果没有，则什么都不做。
 
-**接下来我们看 todoSaga 具体做了些什么？**
+**接下来我们看 sagas 中具体做了些什么？**
 
 ```javascript
-import { takeEvery } from 'redux-saga/effects';
+import { takeEvery, put } from 'redux-saga/effects';
 
-function* todoSaga() {
+function* todosSaga() {
   console.log('hello saga');
   
-  yield takeEvery('FETCH_TODOS', function* fetchTodos() {
-    console.log('FETCH_TODOS action');
+  yield takeEvery('ADD_TODO_GENERATOR', function* addTodos(action) {
+    yield put({
+      type: "ADD_TODO",
+      payload: {
+        id: new Date().getTime(),
+        title: action.title
+      }
+    });
   });
 }
 
-export default todoSaga;
+export default todosSaga;
 ```
 最终 rootSaga 里面的代码会在程序启动时，会依次被执行：
 - 4L：控制台打出 hello saga 的欢迎语。
-- 6L~8L：使用 `takeEvery` 方法会注册一个 watcher saga，对 action 类型为 FETCH_TODOS 实施监听，如果匹配到则进行加工。
+- 6L~14L：使用 `takeEvery` 方法会注册一个 watcher saga，对 action 类型为 ADD_TODO_GENERATOR 实施监听，如果匹配到则进行相应加工。
 
-到了这里 redux-saga 基本使用已经完成了，那么 redux-saga 提供了那些方法可用呢？
+最后我们在任一组件中启动，便可以看到一个完整的单向数据流：
 
-### Effects
-前面介绍过，saga 是一个 generator function，这就意味着它的执行原理必然是下面这样：
 ```javascript
-function isPromise(value) {
-    return value && typeof value.then === 'function';
+import React from 'react';
+import * as TodoActionCreators from './actions/todos';
+import {bindActionCreators} from 'redux';
+import { connect } from 'react-redux';
+
+class App extends React.PureComponent {
+  constructor(props){
+    super(props);
+    this.state = {
+      value: ''
+    };
+    this.addTodo = this.addTodo.bind(this);
+    this.removeTodo = this.removeTodo.bind(this);
+    this.inputChange = this.inputChange.bind(this);
+  }
+  addTodo(){
+    this.props.addTodo(this.state.value);
+  }
+  removeTodo(id){
+    this.props.removeTodo(id);
+  }
+  inputChange(e){
+    this.setState({
+      value: e.target.value
+    });
+  }
+  render() {
+    return (
+      <div>
+        <div>
+          <input type="text" value={this.state.value} onChange={this.inputChange} />
+          <button onClick={this.addTodo}>添加todo</button>
+        </div>
+        <ul>
+          {
+            this.props.todos.map(item => <li key={item.id}>{item.title} <button onClick={() => this.removeTodo(item.id)}>删除</button></li>)
+          }
+        </ul>
+      </div>
+    );
+  }
 }
 
-const iterator = saga(/* ...args */);
+function mapStateToProps(state) {
+  return {
+    todos: state.todos
+  }
+}
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(TodoActionCreators, dispatch);
+}
+export default connect(mapStateToProps, mapDispatchToProps)(App);
+```
 
-// 方法一：
-// 一步一步，手动执行
+当 `<App />` 组件挂载成功之后，通过 `dispatch` 发送 action 请求，如果 action type 为 `ADD_TODO_GENERATOR` 则会匹配到指定的 watcher saga  
+执行对应的 woker saga，从而对原 action 进行加工，最终得到一个新的 store，导致组件 props 修改，执行 re-render 更新 UI。
+
+至此，通过上三个部分代码实现了基于 redux-saga 的一次 **完整单向数据流**。
+
+那么，对于 redux-saga 来说，上述代码中 put/call/fork/takeEvery 这些方法是干什么用的？
+### Effects
+前面介绍过，saga 是用 [Generator](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements/function*) 函数进行实现，这就意味着它的执行起来必然是下面这样：
+
+```javascript
+function isPromise(value) {
+  return value && typeof value.then === 'function';
+}
+function* iterator(){...};
+
+// 方法一：一步一步，手动执行
 let result;
-
 result = iterator.next();
 result = iterator.next(result.value);
 result = iterator.next(result.value);
+// ...done!!
 
-// 方法二：
-// 函数封装，自主执行
+// 方法二：函数封装，自主执行
 function next(args) {
   const result = iterator.next(args);
   if (result.done) {
-    // 执行结束
+    // end
     console.log(result.value);
   } else {
     if (isPromise(result.value)) {
@@ -159,4 +235,122 @@ function next(args) {
 
 next();
 ```
-这也就意味着，在 saga 执行完成之前，它的控制权始终掌握在** 执行者（caller）**手中，即：
+
+可以看出，generator function 在未执行完前，它的控制权始终掌握在执行者手中，即：
+- 由执行者决定什么时候继续执行。
+- 由执行者决定每次 **yield expression** 的返回值。
+
+而执行者本身要实现上面上述功能需要依赖原生 API `next(value)` ，value 可以为 yield expression 的返回值。
+
+比如下面代码：
+```javascript
+function* gen() {
+  const value = yield Promise.reslove('hello saga');
+  console.log('value: ', value);
+}
+```
+此时 gen 函数中 value 的结果，主要由执行者来决定，如果是上面的 `next` 方法进行迭代执行，那么 value 的值便为 hello saga，否则其结果不能够确定。
+
+上面说了这么多，那么 saga 中的 effect 到底是什么呢？
+
+我们看下官网的解释：
+> Effect 是一个简单的对象，这个对象包含了一些给 middleware 解释执行的信息。 你可以把 Effect 看作是发送给 middleware 的指令以执行某些操作（调用某些异步函数，发起一个 action 到 store，等等）。
+
+意识是：effect 本质还是一个普通的 javascript 对象，其中包含着一些指令信息，最终这些指令都会转交为 saga middleware 解释执行。
+
+我们用一段代码，来解释上述这句话：
+```javascript
+import { call } from 'redux-saga/effects'
+
+function* fetchProducts() {
+  const products = yield call(Api.fetch, '/products')
+  // ...
+}
+```
+可以看出：
+- **call** 方法用于创建一个 effect 对象。
+- **yield** 方法可以将 effect 对象，传递给 sagaMiddleware 解释执行。
+
+上面的 **call effect** 表示执行 `Api.fetch(/products)` ，又因为其是个异步方法，为了等待异步结果返回，函数会暂时处于 **阻塞** 状态。
+
+除了上述所说的 call effect 之外，redux-saga 还提供了很多其他 effect 类型，它们都是由对应的 effect factory 生成，在 saga 中应用于不同的场景，比较常用的是：
+- **put**：用于发送一个 action，相当于之前的 `store.dispatch(action)`。
+- **take**：监听指定的 action，只有触发相应的 action 函数中的逻辑才会执行。
+- **fork**：和上面的 **call effect** 类似，但其不会阻塞 saga 中代码的执行，其返回值是一个 task 对象。
+- **cancel**：用于操作 fork 方法返回的 task，可以进行取消关闭。
+- ....
+
+其中 call 和 fork 作用是相同的，唯一区别便是阻塞与非阻塞。
+
+### Call vs Fork
+在 saga 中 call 和 fork 都是用来执行指定函数 fn，区别在于：
+- **call effect** 会阻塞当前 saga 的执行，直到函数执行完毕，才会执行下一步代码。
+- **fork effect** 不会阻塞当前 saga，会立即返回一个 task 对象。
+
+比如我们模仿一个异步操作：
+```javascript
+// 模仿异步
+function fn() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve('hello saga');
+    }, 2000);
+  });
+}
+function* fetchProducts() {
+  // 阻塞：等待 2 秒后，打印 hello saga
+  const greeting = yield call(fn);
+  console.log('greeting: ', greeting);
+
+  // 非阻塞：立即打印 task 对象
+  const task = yield fork(fn);
+  console.log('task: ', task);
+}
+```
+显然，fork 的异步由于非阻塞的特点，适合运行一些不影响主流程的代码（比如：后台打开、后台监听等操作），这往往是加快页面渲染的一种方式。倘若在这种情况下，你依然要获取返回结果，可以这样做：
+```javascript
+const task = yield fork(fn);
+task.done().then((greeting) => {
+  console.log('greeting: ', greeting);
+});
+```
+
+到了最后，在简单的聊下 saga 怎么处理遇到的错误。
+
+### Error Handling
+我们代码中任一个接口都有可能出现异常，可能是网络请求问题，也可能是后端数据格式问题，但不管怎样，给予日志上报或友好的错误提示是不可缺少的，这也往往体现了代码的健壮性，一般会这么做：
+```javascript
+function* fetchProducts() {
+  try {
+    const products = yield call(Api.fetch, '/products')
+    yield put({ type: 'PRODUCTS_RECEIVED', products })
+  }
+  catch(error) {
+    yield put({ type: 'PRODUCTS_REQUEST_FAILED', error })
+  }
+}
+```
+当然，你并不一定得在 `try/catch` 区块中处理错误，你也可以让你的 API 服务返回一个正常的含有错误标识的值。例如， 你可以捕捉 Promise 的拒绝操作，并将它们映射到一个错误字段对象。
+```javascript
+import Api from './path/to/api'
+import { call, put } from 'redux-saga/effects'
+
+function fetchProductsApi() {
+  return Api.fetch('/products')
+    .then(response => ({ response }))
+    .catch(error => ({ error }))
+}
+
+function* fetchProducts() {
+  const { response, error } = yield call(fetchProductsApi)
+  if (response)
+    yield put({ type: 'PRODUCTS_RECEIVED', products: response })
+  else
+    yield put({ type: 'PRODUCTS_REQUEST_FAILED', error })
+}
+```
+这样我们为每一个 API 函数添加错误的处理，如果出现错误，可以给用户很好的提醒，并避免程序陷入崩溃。
+
+## 参考资料
+- [redux-saga](https://redux-saga.js.org/)
+- [Redux-Saga 漫谈](https://zhuanlan.zhihu.com/p/35437092)
