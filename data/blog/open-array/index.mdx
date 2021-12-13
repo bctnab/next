@@ -1,0 +1,58 @@
+---
+title: JS拍平一个数组
+categorie: 工具类
+date: '2021-12-12 21:30:40'
+slug: open-array
+abstract: 根据需求把一个多维数组，转换为一个一维数组。
+isPublished: true
+tags:
+  - JavaScript
+  - Array
+---
+
+需求示例：
+```javascript
+var arr = [1, 2, 3, [4, 5, 6, [7]]] ===> [1, 2, 3, 4, 5, 6, 7]
+```
+
+## 方式一：递归
+```javascript
+function flatten(data) {
+  let result = [];
+
+  data.map(item => {
+    if (Array.isArray(item)) {
+      result = result.concat(flatten(item));
+    } else {
+      result.push(item)
+    }
+  })
+  return result
+}
+
+console.log(flatten(arr));
+```
+## 方式二：split
+```javascript
+var arr = [1, 2, 3, [4, 5, 6, [7]]];
+
+var result = arr.toString().split(',');
+```
+## 方式三：reduce
+```javascript
+function flatten(data){
+  return data.reduce(function(init, item){
+    return init.concat(Array.isArray(item)?flatten(item):item)
+  }, [])
+}
+```
+## 方式四：some + apply
+这种方式可以称之为一种黑科技，利用 some 判断是否含有数组，结合 apply 展开：
+```javascript
+function flatten(data){
+  while(data.some(item => Array.isArray(item))){
+    data = [].concat.apply([], data);
+  }
+  return data;
+}
+```
