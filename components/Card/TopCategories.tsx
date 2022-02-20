@@ -30,9 +30,8 @@ const Link = styled(TextLink)`
   padding: .4rem .75rem;
   font-size: 0.9rem;
   border-radius: 4px;
-  transition: background 0.3s;
   &:hover{
-    background: var(--color-gray-200);
+    background: var(--color-gray-100);
   }
 `;
 const Number = styled.span`

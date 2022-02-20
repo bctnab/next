@@ -111,3 +111,5 @@ export const TIGHT_SPRING = {
   tension: 450,
   friction: 25,
 };
+
+export const MAX_NUM_OF_LIKES = 16;

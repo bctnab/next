@@ -1,6 +1,20 @@
 // TODO: Modernize
 /* eslint-disable */
 
+export const sampleOne = (arr) => {
+  return arr[Math.floor(Math.random() * arr.length)];
+};
+
+export const sample = (arr, len = 1) => {
+  let output = [];
+
+  for (let i = 0; i < len; i++) {
+    output.push(sampleOne(arr));
+  }
+
+  return output;
+};
+
 export const range = (start, end, step = 1) => {
   let output = [];
   if (typeof end === 'undefined') {
@@ -30,6 +44,20 @@ export const throttle = (func, limit) => {
       }, limit - (Date.now() - lastRan));
     }
   };
+};
+
+export const getDistanceBetweenPoints = (p1, p2) => {
+  const deltaX = Math.abs(p2.x - p1.x);
+  const deltaY = Math.abs(p2.y - p1.y);
+
+  return Math.sqrt(deltaX ** 2 + deltaY ** 2);
+};
+
+export const generateId = (len = 4) => {
+  // prettier-ignore
+  const characters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+
+  return sample(characters, len).join('');
 };
 
 export const debounce = (callback, wait, timeoutId = null) => (
@@ -73,3 +101,12 @@ export const normalize = (
     (newScaleMax - newScaleMin) * standardNormalization + newScaleMin
   );
 };
+
+export const clamp = (val, min = 0, max = 1) =>
+  Math.max(min, Math.min(max, val));
+
+export const convertRadiansToDegrees = (angle) =>
+  (angle * 180) / Math.PI;
+
+export const random = (min, max) =>
+  Math.floor(Math.random() * (max - min)) + min;

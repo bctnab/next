@@ -1,21 +1,27 @@
 import React from 'react';
+import styled from 'styled-components';
 
 import {
-  getPostTimeAxis,
   getPopularBlogs,
   getCategories,
 } from '../lib/content';
+import {
+  getDiary
+} from '../lib/diary';
+import Tag from '../components/Tag/Tag';
 import Sticky from '../components/Sticky/Sticky';
 import StandardLayout from '../layouts/Standard';
-import Timeline from '../components/Line/TimeLine';
+import DiaryLine from '../components/Line/DiaryLine';
 import TopCategories from '../components/Card/TopCategories';
 import AuthorContent from '../components/Card/AuthorContent';
-import MoreFunctions from '../components/Card/MoreFunctions';
 import PopularContent from '../components/Card/PopularContent';
 
-const MainContent = ({ posts }) => {
+const MainContent = ({ diary }) => {
   return (
-    posts.map((item) => <Timeline key={ item.title } title={ item.title } data={ item.data } />)
+    <Wrapper>
+      <Tag>个人日志</Tag>
+      {diary.map((item, index) => <DiaryLine key={ index } data={ item } />)}
+    </Wrapper>
   )
 }
 const RightContent = ({ populars, categories }) => {
@@ -23,7 +29,6 @@ const RightContent = ({ populars, categories }) => {
     <>
       <AuthorContent />
       <Sticky top="1.5rem">
-        <MoreFunctions />
         <PopularContent data={ populars } />
         <TopCategories data={ categories } />
       </Sticky>
@@ -31,26 +36,30 @@ const RightContent = ({ populars, categories }) => {
   )
 }
 
-const ArchivePage = ({
-  posts,
+const DiaryPage = ({
+  diary,
   categories,
   populars,
 }) => {
   return (
     <StandardLayout
-      mainContent={ <MainContent posts={ posts } /> }
+      mainContent={ <MainContent diary={diary} />}
       rightContent={ <RightContent populars={ populars } categories={ categories } /> }
     />
   );
 };
 
 export async function getStaticProps() {
-  const posts = await getPostTimeAxis();
+  const diary = await getDiary();
   const categories = await getCategories();
   const populars = await getPopularBlogs();
   return {
-    props: { posts, categories, populars },
+    props: { diary, categories, populars },
   };
 }
 
-export default ArchivePage;
+const Wrapper = styled.div`
+  margin-top: 1rem;
+`;
+
+export default DiaryPage;

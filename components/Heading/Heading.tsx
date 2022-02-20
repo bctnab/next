@@ -3,10 +3,11 @@ import styled from 'styled-components';
 
 const Heading = (props) => {
   const {
-    type = 'medium-title',
+    type = 'large-title',
     renderAs,
     ...delegated
   } = props;
+
   let Component;
   if (type === 'large-title') {
     Component = LargeTitle;

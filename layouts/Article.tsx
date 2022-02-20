@@ -9,6 +9,7 @@ import { isBlank } from '../utils/validate';
 import { LightLink } from '../components/Link/Link';
 import Heading from '../components/Heading/Heading';
 import AuthorContent from '../components/Card/AuthorContent';
+import MoreFunctions from '../components/Card/MoreFunctions';
 import ContentPreview from '../components/ContentPreview/ContentPreview';
 import ArticlePreview from '../components/ArticleContent/ArticlePreview';
 
@@ -53,6 +54,7 @@ const RightContent = () => {
   return (
     <>
       <AuthorContent />
+      <MoreFunctions />
     </>
   )
 }

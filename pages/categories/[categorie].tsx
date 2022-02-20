@@ -11,6 +11,7 @@ import Sticky from '../../components/Sticky/Sticky';
 import StandardLayout from '../../layouts/Standard';
 import Heading from '../../components/Heading/Heading';
 import TopCategories from '../../components/Card/TopCategories';
+import MoreFunctions from '../../components/Card/MoreFunctions';
 import AuthorContent from '../../components/Card/AuthorContent';
 import PopularContent from '../../components/Card/PopularContent';
 import ContentPreview from '../../components/ContentPreview/ContentPreview';
@@ -34,6 +35,7 @@ const RightContent = ({ populars, categories }) => {
     <>
       <AuthorContent />
       <Sticky top="1.5rem">
+        <MoreFunctions />
         <PopularContent data={ populars } />
         <TopCategories data={ categories } />
       </Sticky>

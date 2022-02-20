@@ -1,0 +1,30 @@
+@font-face {
+  font-family: "icon-font"; /* Project id 3193177 */
+  src: url('../assets/fonts/icon-font/iconfont.woff2?t=1645319496704') format('woff2'),
+    url('../assets/fonts/icon-font/iconfont.woff?t=1645319496704') format('woff'),
+    url('../assets/fonts/icon-font/iconfont.ttf?t=1645319496704') format('truetype');
+}
+
+.icon-font {
+  font-family: "icon-font" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-child:before {
+  content: "\e64c";
+}
+
+.icon-compass:before {
+  content: "\e656";
+}
+
+.icon-calendar-alt:before {
+  content: "\e867";
+}
+
+.icon-smile-wink:before {
+  content: "\e65e";
+}

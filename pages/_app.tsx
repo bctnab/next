@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/router';
 import { ThemeProvider } from 'styled-components';
 
 import { THEME } from '../colors';
@@ -9,8 +8,8 @@ import GlobalStyles from '../components/GlobalStyles/GlobalStyles';
 
 import 'focus-visible';
 import '../styles/markdown.css';
-import 'tippy.js/dist/tippy.css';
 import '../styles/font-styles.css';
+import '../styles/icon-styles.css';
 
 export default function App({ Component, pageProps }) {
   return (

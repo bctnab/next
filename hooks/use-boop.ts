@@ -11,8 +11,8 @@ function useBoop({
   timing = 150,
   springConfig = {
     tension: 300,
-    friction: 10,
-  },
+    friction: 10
+  }
 }) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -22,12 +22,12 @@ function useBoop({
     backfaceVisibility: 'hidden',
     transform: isBooped
       ? `translate(${x}px, ${y}px)
-         rotate(${rotation}deg)
-         scale(${scale})`
-      : `translate(0px, 0px)
-         rotate(0deg)
-         scale(1)`,
-    config: springConfig,
+        rotate(${rotation}deg)
+        scale(${scale})`
+    : `translate(0px, 0px)
+        rotate(0deg)
+        scale(1)`,
+    config: springConfig
   });
 
   React.useEffect(() => {

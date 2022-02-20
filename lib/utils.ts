@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'fs';
 
 // 排序
 export const sortPosts = (posts, limit) => {
-  const sortedPosts = [...posts].sort((a, b) => {
+  const sortedPosts = posts.sort((a, b) => {
     return Date.parse(b.time) - Date.parse(a.time);
   });
   if (limit && limit > 0 && limit < sortedPosts.length) return sortedPosts.splice(0, limit);
@@ -110,12 +110,27 @@ export const getBlogContent = (pathname, slug) => {
 export const getDatas = ( pathname ) => {
   const postsDirectory = join(process.cwd(), pathname);
   const filenames = readdirSync(postsDirectory);
-
   let posts = filenames.map((filename) => {
     const filePath = join(postsDirectory, filename, 'index.mdx')
     const fileContents = readFileSync(filePath, 'utf8')
     const { data } = matter(fileContents);
     return data;
+  });
+  return posts;
+}
+
+// 获取日志
+export const getContent = ( pathname ) => {
+  const postsDirectory = join(process.cwd(), pathname);
+  const filenames = readdirSync(postsDirectory);
+
+  let posts = filenames.map((filename) => {
+    const filePath = join(postsDirectory, filename, 'index.mdx')
+    const fileContents = readFileSync(filePath, 'utf8');
+    return {
+      time: filename,
+      content: fileContents
+    };
   });
   return posts;
 }
