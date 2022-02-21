@@ -20,7 +20,7 @@ const MainContent = () => {
       <Heading align="center">小伙伴们</Heading>
       <Description>小伙伴的链接，每次随机刷新(*^▽^*)</Description>
       <Grid>
-        <GridItem href={`/pos`}>
+        <GridItem href="https://my.bplink66.com/">
           <img src="https://img.bplink66.com/2021/11/05/zuuoiviq80.jpg" />
           <GridTitle>个人博客</GridTitle>
           <GridDesc>一只南美洲亚马逊河流域热带雨林中的蝴蝶，偶尔扇动几下翅膀，可以在两周以后引起美国得克萨斯州的一场龙卷风。</GridDesc>
