@@ -4,10 +4,7 @@ import ContentPreview from '../ContentPreview/ContentPreview';
 const BriefContent = ({
   data
 }) => {
-  const {
-    time,
-    content
-  } = data;
+  const { time, content } = data;
   return (
     <Wrapper>
       <time dateTime={ time }>{ time }</time>

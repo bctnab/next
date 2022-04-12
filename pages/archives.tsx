@@ -10,7 +10,7 @@ import StandardLayout from '../layouts/Standard';
 import Timeline from '../components/Line/TimeLine';
 import TopCategories from '../components/Card/TopCategories';
 import AuthorContent from '../components/Card/AuthorContent';
-import MoreFunctions from '../components/Card/MoreFunctions';
+import MoreContent from '../components/Card/MoreContent';
 import PopularContent from '../components/Card/PopularContent';
 
 const MainContent = ({ posts }) => {
@@ -23,7 +23,7 @@ const RightContent = ({ populars, categories }) => {
     <>
       <AuthorContent />
       <Sticky top="1.5rem">
-        <MoreFunctions />
+        <MoreContent />
         <PopularContent data={ populars } />
         <TopCategories data={ categories } />
       </Sticky>

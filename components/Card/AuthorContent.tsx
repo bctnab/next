@@ -2,81 +2,90 @@ import React from 'react';
 import styled from 'styled-components';
 
 import Heading from '../Heading/Heading';
-import CategoryPill from '../CategoryPill/CategoryPill';
+import Toggle from '../Toggle/Toggle';
 import ContentPreview from '../ContentPreview/ContentPreview';
 import PixivSVG from '../SVG/Pixiv';
 import GithubSVG from '../SVG/Github';
-import RssSVG from '../SVG/RSS';
 import Nintendo from '../SVG/Nintendo';
 import TwitterSVG from '../SVG/Twitter';
+import SteamSVG from '../SVG/Steam';
 
 const AuthorContent = () => {
 
   return (
     <ContentPreview>
+      <PhotoBackground />
       <AuthorAvatar>
-        <AuthorImage src="https://img.bplink66.com/2021/11/05/zuuoiviq80.jpg" />
+        <AuthorImage src="https://img.bplink66.com/uploads/2022/04/62537f4b5ac6c.jpg" />
       </AuthorAvatar>
+      <CensusMenu>
+        <CensusMenuItem>
+          <CensusMenuNum>---</CensusMenuNum>
+          <p>文章</p>
+        </CensusMenuItem>
+        <CensusMenuItem>
+          <CensusMenuNum>---</CensusMenuNum>
+          <p>日记</p>
+        </CensusMenuItem>
+        <CensusMenuItem>
+          <CensusMenuNum>---</CensusMenuNum>
+          <p>评论</p>
+        </CensusMenuItem>
+      </CensusMenu>
       <Heading type="minor-heading" align="center">你能抓到我么？</Heading>
-      <Tags>
-        <CategoryPill href="https://twitter.com/home">
-          <TagItem>
-            <TwitterSVG size="18" />
-            <span>Twitter</span>
-          </TagItem>
-        </CategoryPill>
-        <CategoryPill href="https://www.pixiv.net/users/71080901">
-          <TagItem>
-            <PixivSVG size="18" />
-            <span>Pixiv</span>
-          </TagItem>
-        </CategoryPill>
-        <CategoryPill href="https://my.bplink66.com/atom.xml">
-          <TagItem>
-            <RssSVG size="18" />
-            <span>RSS</span>
-          </TagItem>
-        </CategoryPill>
-        <CategoryPill href="https://github.com/bctnab">
-          <TagItem>
-            <GithubSVG size="18" />
-            <span>Github</span>
-          </TagItem>
-        </CategoryPill>
-        <CategoryPill href="https://www.nintendo.com.hk/">
-          <TagItem>
-            <Nintendo size="18" />
-            <span>Switch</span>
-          </TagItem>
-        </CategoryPill>
-      </Tags>
+      <Toggles>
+        <Toggle color='#4e6ef2' href="https://twitter.com/home" children={<TwitterSVG color='#fff' />} />
+        <Toggle color='#01AAED' href="https://www.pixiv.net/users/71080901" children={<PixivSVG color='#fff' />} />
+        <Toggle color='#505050' href="https://github.com/bctnab" children={<GithubSVG color="#fff" />} />
+        <Toggle color='#E8442E' href="https://www.nintendo.com.hk" children={<Nintendo color="#fff" />} />
+        <Toggle color='#000' href="https://store.steampowered.com" children={<SteamSVG color="#fff" />} />
+      </Toggles>
     </ContentPreview>
   );
 };
-
+const PhotoBackground = styled.div`
+  height: 120px;
+  margin: -1.2rem -1.2rem 0;
+  background: url(https://img.bplink66.com/uploads/2022/04/6254ca448b48d.png) no-repeat center center;
+  background-size: cover;
+`;
+const CensusMenu = styled.div`
+  margin: 26px 0;
+  font-size: 16px;
+`;
+const CensusMenuItem = styled.div`
+  text-align: center;
+  padding: 0 4px;
+  width: 33.3%;
+  display: inline-block;
+  &:not(:last-child){
+    border-right: 1px solid var(--color-gray-100);
+  }
+`;
+const CensusMenuNum = styled.p`
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #00a1d6;
+`;
 const AuthorAvatar = styled.div`
   display: block;
   position: relative;
-  width: 6.4rem;
-  height: 6.4rem;
-  margin: 0 auto 0.6rem;
+  width: 5.8rem;
+  height: 5.8rem;
+  margin: -2.9rem auto 0.6rem;
+  position: relative;
 `;
 const AuthorImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 3.2rem;
+  border-radius: 50%;
+  border: var(--color-background) 2px solid;
 `;
-const Tags = styled.div`
+const Toggles = styled.div`
   text-align: center;
-`;
-const TagItem = styled.div`
-  display: flex;
-  align-items: center;
-  height: 30px;
-  span{
-    margin-left: 5px;
-  }
+  font-size: 0;
 `;
 
 export default AuthorContent;

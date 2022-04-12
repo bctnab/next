@@ -10,7 +10,7 @@ import {
 import Sticky from '../../components/Sticky/Sticky';
 import StandardLayout from '../../layouts/Standard';
 import Heading from '../../components/Heading/Heading';
-import MoreFunctions from '../../components/Card/MoreFunctions';
+import MoreContent from '../../components/Card/MoreContent';
 import TopCategories from '../../components/Card/TopCategories';
 import AuthorContent from '../../components/Card/AuthorContent';
 import PopularContent from '../../components/Card/PopularContent';
@@ -35,7 +35,7 @@ const RightContent = ({ populars, categories }) => {
     <>
       <AuthorContent />
       <Sticky top="1.5rem">
-        <MoreFunctions />
+        <MoreContent />
         <PopularContent data={ populars } />
         <TopCategories data={ categories } />
       </Sticky>

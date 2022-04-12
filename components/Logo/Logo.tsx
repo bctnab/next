@@ -1,8 +1,6 @@
 import NextLink from 'next/link';
 import styled from 'styled-components';
 
-import { TextLink } from '../Link/Link';
-
 const HeaderLongo = () => {
   return (
     <NextLink href="/" passHref>
@@ -21,19 +19,16 @@ const HeaderLongo = () => {
   )
 }
 
-const Wrapper = styled(TextLink)`
+const Wrapper = styled.a`
   display: flex;
   flex-grow: 0;
   flex-shrink: 0;
-  margin-left: -0.7rem;
   font-size: 1.2rem;
+  margin-left: -0.7rem;
+  align-items: center;
+  color: var(--color-text);
   text-decoration: none;
   padding: 0.7rem 0.8rem;
-  align-items: center;
-  &:hover{
-    color: var(--color-primary);
-    background-color: var(--color-gray-200);
-  }
 `;
 const Name = styled.span`
   font-weight: var(--font-weight-medium);

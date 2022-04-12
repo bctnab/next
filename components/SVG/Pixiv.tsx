@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const PixivSVG = ({ color = '#0074AA', size }) => {
+const PixivSVG = ({ color = '#0074AA' }) => {
   return (
-    <Wrapper size={size} viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <Wrapper viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M701.515 301.152c-44.44-46.092-100.245-64.919-163.08-65.107-29.552-0.089-58.595 4.617-87.095 12.455-28.961 7.965-56.673 18.839-81.996 35.306-3.347 2.176-4.69 4.686-4.695 8.694-0.034 29.713-0.333 59.424-0.426 89.137-0.085 27.263-0.018 54.527-0.021 81.79-0.004 56.836 0.053 113.674-0.097 170.51-0.015 5.326 1.57 8.393 6.639 10.576 17.881 7.7 36.245 13.85 55.161 18.37 30.808 7.36 62.082 10.876 93.715 12.36 33.75 1.583 66.83-1.28 98.832-12.378 61.328-21.265 105.46-61.217 129.447-121.99 15.492-39.25 17.417-80.058 10.877-121.393-7.146-45.173-25.384-85.268-57.26-118.33z"
         fill={ color }
@@ -17,8 +17,15 @@ const PixivSVG = ({ color = '#0074AA', size }) => {
 };
 
 const Wrapper = styled.svg`
-  width: ${(props) => props.size}px;
-  height: ${(props) => props.size}px;
+  width: 1em;
+  height: 1em;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  left: 0;
+  right: 0;
+  margin: auto;
 `;
 
 export default PixivSVG;

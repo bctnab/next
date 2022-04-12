@@ -16,24 +16,14 @@ const ExternalLink = styled.a`
 
 const TextLink = styled(ExternalLink)`
   color: ${(props) => (props.color || 'var(--color-text)')};
-
   &:hover{
     box-shadow: none;
     color: var(--color-primary);
   }
 `;
 
-const LightLink = styled(ExternalLink)`
-  color: var(--color-gray-700);
-
-  &:hover{
-    box-shadow: none;
-    color: var(--color-primary);
-  }
-`;
 export {
   ExternalLink,
-  TextLink,
-  LightLink
+  TextLink
 }
 export default ExternalLink;

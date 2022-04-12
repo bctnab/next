@@ -6,7 +6,7 @@ const MaxWidthWrapper = styled.div`
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 1.75rem;
 
   @media ${p => p.theme.breakpoints.mdAndSmaller} {
     padding: 0 0.75rem;

@@ -1,10 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {
-  COLOR_SWAP_TRANSITION_DURATION,
-} from '../colors';
-
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import Spacer from '../components/Spacer/Spacer';
@@ -20,11 +16,7 @@ const StandardLayout = ({
   
   return (
     <Wrapper>
-      <HeaderWrapper>
-        <MaxWidthWrapper>
-          <Header />
-        </MaxWidthWrapper>
-      </HeaderWrapper>
+      <Header />
       <Main>
         <MainCol>
           { mainContent }
@@ -41,11 +33,6 @@ const StandardLayout = ({
 
 const Wrapper = styled.div`
   min-height: 100vh;
-`;
-const HeaderWrapper = styled.div`
-  background: var(--color-background);
-  box-shadow: var(--color-box-shadow);
-  transition: background ${COLOR_SWAP_TRANSITION_DURATION}ms;
 `;
 const RightCol = styled.aside`
   order: 2;

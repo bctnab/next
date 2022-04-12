@@ -4,22 +4,14 @@ import styled from 'styled-components';
 
 import { isBlank } from '../../utils/validate';
 import Heading from '../Heading/Heading';
-import { ExternalLink, LightLink } from '../Link/Link';
+import { ExternalLink } from '../Link/Link';
 import ArticlePreview from './ArticlePreview';
 import ContentPreview from '../ContentPreview/ContentPreview';
 
 const OrderedContent = ({
   data
 }) => {
-  const {
-    slug,
-    date,
-    time,
-    title,
-    preview,
-    abstract,
-    categorie
-  } = data;
+  const { slug, date, time, title, preview, abstract, categorie } = data;
   return (
     <Wrapper>
       {
@@ -41,13 +33,7 @@ const OrderedContent = ({
         </NextLink>
         <Excerpt>{ abstract }</Excerpt>
         <Footer>
-          <div>
-            <time dateTime={ time }>{ date }</time>
-            <Dot />
-            <NextLink passHref href={`/categories/${ categorie}`}>
-              <LightLink>{ categorie }</LightLink>
-            </NextLink>
-          </div>
+          <time dateTime={ time }>{ date }</time>
           <NextLink passHref href={`/post/${ slug}`}>
             <ExternalLink>继续阅读</ExternalLink>
           </NextLink>
@@ -56,6 +42,7 @@ const OrderedContent = ({
     </Wrapper>
   );
 };
+
 const Wrapper = styled(ContentPreview)`
   position: relative;
   padding: 0 !important;
@@ -72,13 +59,6 @@ const Footer = styled.div`
   font-weight: var(--font-weight-medium);
   color: var(--color-gray-700);
   justify-content: space-between;
-`;
-const Dot = styled.span`
-  margin: 0 0.2rem;
-  font-weight: bold;
-  &:after{
-    content: "·";
-  }
 `;
 
 export default OrderedContent;

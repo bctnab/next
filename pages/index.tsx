@@ -7,21 +7,27 @@ import {
 } from '../lib/content';
 import StandardLayout from '../layouts/Standard';
 import Sticky from '../components/Sticky/Sticky';
+import MoreContent from '../components/Card/MoreContent';
+import MottoContent from '../components/Card/MottoContent';
 import TopCategories from '../components/Card/TopCategories';
 import AuthorContent from '../components/Card/AuthorContent';
-import MoreFunctions from '../components/Card/MoreFunctions';
 import PopularContent from '../components/Card/PopularContent';
 import ArticleContent from '../components/ArticleContent/ArticleContent';
 
 const MainContent = ({ posts }) => {
   return (
-    posts.map((item) => (
-      <ArticleContent
-        key={ item.slug }
-        type="ordered"
-        data={item}
-      />
-    ))
+    <>
+      <MottoContent />
+      {
+        posts.map((item) => (
+          <ArticleContent
+            key={ item.slug }
+            type="ordered"
+            data={ item }
+          />
+        ))
+      }
+    </>
   )
 }
 const RightContent = ({ populars, categories }) => {
@@ -29,7 +35,7 @@ const RightContent = ({ populars, categories }) => {
     <>
       <AuthorContent />
       <Sticky top="1.5rem">
-        <MoreFunctions />
+        <MoreContent />
         <PopularContent data={ populars } />
         <TopCategories data={ categories } />
       </Sticky>

@@ -6,10 +6,9 @@ import { COMPONENTS } from '../lib/mdx-components';
 
 import StandardLayout from './Standard';
 import { isBlank } from '../utils/validate';
-import { LightLink } from '../components/Link/Link';
 import Heading from '../components/Heading/Heading';
 import AuthorContent from '../components/Card/AuthorContent';
-import MoreFunctions from '../components/Card/MoreFunctions';
+import MoreContent from '../components/Card/MoreContent';
 import ContentPreview from '../components/ContentPreview/ContentPreview';
 import ArticlePreview from '../components/ArticleContent/ArticlePreview';
 
@@ -28,10 +27,6 @@ const MainContent = ({ content, mdx }) => {
         <Heading type="large-title">{ title }</Heading>
         <Meta>
           <time dateTime={ time }>{ date }</time>
-          <Dot />
-          <NextLink passHref href={`/categories/${ categorie}`}>
-            <LightLink>{ categorie }</LightLink>
-          </NextLink>
         </Meta>
       </ArticleHeader>
       <ArticleBody className="markdown-body">
@@ -42,7 +37,7 @@ const MainContent = ({ content, mdx }) => {
         {
           tags.map((item) => (
             <NextLink key={ item } passHref href={`/tags/${ item}`}>
-              <LightLink># { item}</LightLink>
+              <a># { item}</a>
             </NextLink>
           ))
         }
@@ -54,7 +49,7 @@ const RightContent = () => {
   return (
     <>
       <AuthorContent />
-      <MoreFunctions />
+      <MoreContent />
     </>
   )
 }

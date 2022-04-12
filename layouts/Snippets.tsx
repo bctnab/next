@@ -6,9 +6,8 @@ import { COMPONENTS } from '../lib/mdx-components';
 
 import StandardLayout from './Standard';
 import Spacer from '../components/Spacer/Spacer';
-import { LightLink } from '../components/Link/Link';
 import Heading from '../components/Heading/Heading';
-import MoreFunctions from '../components/Card/MoreFunctions';
+import MoreContent from '../components/Card/MoreContent';
 import AuthorContent from '../components/Card/AuthorContent';
 import ContentPreview from '../components/ContentPreview/ContentPreview';
 
@@ -23,7 +22,7 @@ const MainContent = ({ content, mdx }) => {
           <time dateTime={ time }>{ date }</time>
           <Dot />
           <NextLink passHref href={`/snippets`}>
-            <LightLink>代码片段</LightLink>
+            <a>代码片段</a>
           </NextLink>
         </Meta>
       </ArticleHeader>
@@ -38,7 +37,7 @@ const RightContent = () => {
   return (
     <>
       <AuthorContent />
-      <MoreFunctions />
+      <MoreContent />
     </>
   )
 }

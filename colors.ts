@@ -5,7 +5,7 @@ export const LIGHT_COLORS: {
 } = {
   text: 'rgb(10, 12, 16)',
   background: '#fff',
-  fillBackground: '#f2f5f8',
+  fillBackground: '#f5f6f7',
   primary: 'rgb(50, 115, 220)',
   secondary: 'rgb(230, 0, 104)',
   boxRadius: '0.5rem',
