@@ -1,0 +1,47 @@
+---
+title: chrome 安装 vue-devtools
+categorie: 技术向
+date: '2022-04-12 10:06:02'
+slug: vue-devtools
+abstract: vue-devtools 是 Vue 官方推出的浏览器插件，可以说是 Vue 开发调试，它可以很好的帮助我们跟踪实时数据、管理 vuex 状态、从此让你告别 console 大法。
+isPublished: true
+tags:
+  - Vue
+---
+
+## 前言
+`vue-devtools` 插件开发中很实用，但有挺多小伙伴，因为无法打开谷歌应用市场，所以无法为浏览器下载该插件，那么我们该如何手动为浏览器打包安装 `devtools` 插件呢？
+
+> 本文只是简单介绍如何打包使用 `devtools` 插件。详细的使用请移步 [官方文档](https://devtools.vuejs.org/) 和 [github README](https://github.com/vuejs/devtools/tree/add-remote-devtools)。
+
+## 打包和安装
+打开 [github vue-devtools](https://github.com/vuejs/devtools) 或 [devtools 官网](https://devtools.vuejs.org/) 都可以看到插件的详细介绍和使用方式。除了这些在介绍，我们还因该注意项目在 Github 中有多个分支，不同的分支使用方式也可能有所差别。
+
+### 打包 vue-devtools
+根据官方的`README`：[vue devtools](https://github.com/vuejs/devtools/tree/add-remote-devtools#manual-installation)
+
+![](https://img.bplink66.com/uploads/2022/04/6254ea28d8e41.png)
+
+```
+# 拉取指定分支代码
+git clone -b add-remote-devtools https://github.com/vuejs/devtools.git
+cd devtools
+# 安装依赖
+npm install
+# 构建
+npm run build
+```
+一切正常的话，项目构建成功后，我们可以得到 `devtools/shells/chrome/` 文件夹。
+### 安装
+![](https://img.bplink66.com/uploads/2022/04/62556685f3f99.png)
+
+如上图所示，只需按照步骤，首先在谷歌浏览器输入 `chrome://extensions/`，然后打开 `开发者模式`，之后点击 `加载已解压的扩展程序`，选择我们打包生成的 `devtools/shells/chrome/` 文件夹即可完成安装。
+
+安装完成后，就可以开心的调试了，如果界面不能使用我们可以检查下插件相关的权限是否启用：
+
+![](https://img.bplink66.com/uploads/2022/04/6254efbb81b81.png)
+
+上面选项默认是开启的，建议开启相关权限，便于让插件更好的为我们服务。
+
+## 总结
+文章介绍相对比较简单，不过我们可以使用这种方式为浏览器安装 `devtools` 插件，同时也要养好多阅读 `github README` 文档的习惯。优秀的开源项目，`README` 写的都会非常好，对于新的功能的介绍等，也都会在 `README` 上有所体现。虽然一般 `README` 是英文的会阻拦一部分人，但如果真的看不懂还可以通过各种翻译工具来帮助我们。
