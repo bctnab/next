@@ -3,9 +3,54 @@ title: Docker 匿名卷和命名卷
 categorie: 技术向
 date: '2022-04-12 21:46:02'
 slug: docker-volumes
-abstract: Docker 容器中生成和使用的数据在我们重启或删除容器后都会重置。因此我们还需 Docker volumes 或 bind mounts 进行容器数据的持久化，持久化后的数据不仅能长久存储还能在多个容器之间共享。下面通过这篇文章，帮您了解如何在项目中使用 Docker volumes 和 bind mounts。
+abstract: Docker Container 运行时会产生一些相关的记录数据，这些数据会随着 Container 的删除而随之消失，并且 Container 之间的数据也是不能共享的。为此我们需要对 Container 所产生的数据进行持久化，而持久化方案有 Docker volumes 和 bind mounts 两种，持久化后的数据不仅能长久存储、还能在多个容器之间共享。下面通过这篇文章，帮您了解各个持久化方案的差别与特点。
 isPublished: true
 preview: https://img.bplink66.com/uploads/2022/04/625584d327b51.jpeg
 tags:
   - Docker
 ---
+
+**阅读本篇文章一定要有 Docker 技术的基础。**
+
+**阅读本篇文章一定要有 Docker 技术的基础。**
+
+**阅读本篇文章一定要有 Docker 技术的基础。**
+## 准备
+为了更加便于理解，本文将通过 Docker 搭建一个 Mongo 服务器并执行一些命令。
+
+在默认情况下 Mongo 中的数据相关存储到 `/data/db` 目录中(配置相关存储到 `/data/configdb` 目录中，不详细介绍)。下面我们将通过各种方案进行相关数据的持久化。
+
+为了方便演示，我们直接使用 `docker-compose.yml` 来启动 Container。您需要使用以下命令启动文件:
+```
+docker-compose up -d
+```
+Container 启动成功后，我们可以使用下面命令在启动成功的 Mongo Container 内创造一些数据便于后续方案对比：
+```
+# 查询所有容器
+docker ps -a
+# 访问容器
+docker exec -it CONTAINER-ID bash
+# 连接数据库
+mongo
+# 运行 Mongo 命令
+use users
+db.users.insert({"name": "Lucifer"})
+db.users.find({})
+```
+至于 `docker-compose.yml` 文件内容，请看下文。
+## 匿名卷
+如果我们运行以下 `docker-compose.yml` 文件，将创建一个匿名卷，之后重新启动容器，数据依旧可见，但在我们移除容器后数据就不存在了。此外，其他容器也无法访问它。
+```
+version: "3"
+
+services:
+  mongo:
+    image: mongo:5.0.3
+    restart: always
+    ports:
+      - 27018:8081
+    volumes:
+      - /data/db
+```
+这是最基础的一种卷，但这种方式极容易造成 Docker 内存不足的问题，这是由于我们在删除容器时，匿名卷是不会删除的，即使我们使用 `docker rm -v CONTAINER-ID`
+> 在前段开发中，**node_modules** 等类似的文件，便可以通过这种方式存储。如果需要重新安装，需要删除容器之后重新运行。
