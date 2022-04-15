@@ -3,7 +3,7 @@ title: Docker 匿名卷和命名卷
 categorie: 技术向
 date: '2022-04-12 21:46:02'
 slug: docker-volumes
-abstract: Docker Container 运行时会产生一些相关的记录数据，这些数据会随着 Container 的删除而随之消失，并且 Container 之间的数据也是不能共享的。为此我们需要对 Container 所产生的数据进行持久化，而持久化方案有 Docker volumes 和 bind mounts 两种，持久化后的数据不仅能长久存储、还能在多个容器之间共享。下面通过这篇文章，帮您了解各个持久化方案的差别与特点。
+abstract: Docker Container 运行时会产生一些相关的记录数据，这些数据会随着 Container 的删除而随之消失，并且 Container 之间的数据也是不能共享的。为此我们需要对 Container 所产生的数据进行持久化，而持久化方案有 Docker volumes(卷) 和 bind mounts(目录挂载) 两种，持久化后的数据不仅能长久存储、还能在多个容器之间共享。下面通过这篇文章，帮您了解各个持久化方案的差别与特点。
 isPublished: true
 preview: https://img.bplink66.com/uploads/2022/04/625584d327b51.jpeg
 tags:
@@ -22,24 +22,28 @@ tags:
 
 为了方便演示，我们直接使用 `docker-compose.yml` 来启动 Container。您需要使用以下命令启动文件:
 ```
-docker-compose up -d
+> docker-compose up -d
 ```
 Container 启动成功后，我们可以使用下面命令在启动成功的 Mongo Container 内创造一些数据便于后续方案对比：
 ```
 # 查询所有容器
-docker ps -a
+> docker ps -a
 # 访问容器
-docker exec -it CONTAINER-ID bash
+> docker exec -it CONTAINER-ID bash
 # 连接数据库
-mongo
+> mongo
 # 运行 Mongo 命令
-use users
-db.users.insert({"name": "Lucifer"})
-db.users.find({})
+> use users
+> db.users.insert({"name": "Lucifer"})
+> db.users.find({})
 ```
 至于 `docker-compose.yml` 文件内容，请看下文。
-## 匿名卷
-如果我们运行以下 `docker-compose.yml` 文件，将创建一个匿名卷，之后重新启动容器，数据依旧可见，但在我们移除容器后数据就不存在了。此外，其他容器也无法访问它。
+## 数据卷
+Docker Volume 简称为数据卷。数据卷是 Docker 引擎维护的存储方式，可以使用 `docker volume create` 命令创建，并且支持多种存储驱动，默认的驱动为 `local`，也就是本地卷驱动，如果需要修改可以使用 `-d` 来指定。
+### 匿名卷
+匿名卷顾名思义就是"没有名称"的数据卷，我们在运行或构建容器时不指定卷名直接使用，都会产生匿名数据卷。
+
+例如，如果我们运行以下 `docker-compose.yml` 文件，将创建一个匿名卷，之后重新启动容器，数据依旧可见，但在我们移除容器后数据就不存在了。此外，其他容器也无法访问它。
 ```
 version: "3"
 
@@ -52,5 +56,21 @@ services:
     volumes:
       - /data/db
 ```
-这是最基础的一种卷，但这种方式极容易造成 Docker 内存不足的问题，这是由于我们在删除容器时，匿名卷是不会删除的，即使我们使用 `docker rm -v CONTAINER-ID`
-> 在前段开发中，**node_modules** 等类似的文件，便可以通过这种方式存储。如果需要重新安装，需要删除容器之后重新运行。
+容器启动成功后，输入下面的命令：
+```
+# 查询所有数据卷
+> docker volume ls
+DRIVER    VOLUME NAME
+local     3d573bed965e02bbc8e75652131962fa6b0fce1fc5926efe1285c1a7b0e101ac
+local     8eeab5fb2363cb8b14f6c5e22d6574575441738621f0d244f1f0c0d6cf230022
+```
+可以看出其创建了两个数据卷，而卷的名称是随机生成的，这些卷便可以称之为匿名卷。
+
+那么我们便碰到了新问题，我们在 `docker-compose.yml` 只创建了一个数据卷，为什么查询出了两个？
+
+这其实和 Docker 最佳实践要求有关，**容器运行时应该尽量保持容器存储层不发生写操作**，容器所产生的数据文件应该保存于卷中。而为了防止用户没有正确的挂载卷，在使用 Dockerfile 构件镜像时，我们可以事先指定某些目录挂载为匿名卷，这样在运行时如果用户不指定挂载，其应用也可以正常运行，不会向容器存储层写入大量数据。之后在运行时使用 `docker run` 中的 `-v` 参数或者 `docker-compose.yml` 中的 `volumes` 覆盖。这样就出现了上面情况，Mongo Container 默认提供了两个匿名数据卷，让用户运行时覆盖，若不覆盖便会产生默认的匿名卷。
+
+通过这种方式极容易造成 Docker 内存不足的问题，这是由于我们在删除容器时，匿名卷是不会删除的，即使我们使用 `docker rm -v CONTAINER-ID` 删除容器，卷依旧会存在，并且下次启动时，会重新创建数据卷。
+
+由于匿名卷的这些特性，其只存放无关紧要的临时数据，随着容器消亡，这些数据将失去存在的意义。比如在前端开发中常见的 **node_modules** 便可以通过这种方式存储。
+### 命名卷
