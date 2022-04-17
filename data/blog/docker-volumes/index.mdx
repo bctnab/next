@@ -3,7 +3,7 @@ title: Docker 匿名卷和命名卷
 categorie: 技术向
 date: '2022-04-12 21:46:02'
 slug: docker-volumes
-abstract: Docker Container 运行时会产生一些相关的记录数据，这些数据会随着 Container 的删除而随之消失，并且 Container 之间的数据也是不能共享的。为此我们需要对 Container 所产生的数据进行持久化，而持久化方案有 Docker volumes(卷) 和 bind mounts(目录挂载) 两种，持久化后的数据不仅能长久存储、还能在多个容器之间共享。下面通过这篇文章，帮您了解各个持久化方案的差别与特点。
+abstract: Docker Container(容器) 运行时会产生一些相关的记录数据，这些数据会随着容器的删除而随之消失，并且多个容器之间的数据也是不能共享的。为此我们需要对容器所产生的数据进行持久化，而持久化方案有 Docker volumes(卷) 和 bind mounts(目录挂载) 两种，持久化后的数据不仅能长久存储、还能在多个容器之间共享。下面通过这篇文章，帮您了解如何在项目中使用 Docker volumes 和 bind mounts。
 isPublished: true
 preview: https://img.bplink66.com/uploads/2022/04/625584d327b51.jpeg
 tags:
@@ -16,15 +16,13 @@ tags:
 
 **阅读本篇文章一定要有 Docker 技术的基础。**
 ## 准备
-为了更加便于理解，本文将通过 Docker 搭建一个 Mongo 服务器并执行一些命令。
+对于这篇文章，我们将运行一个 Mongo 服务器并执行一些命令。在默认情况下 Mongo 中的数据相关存储到 `/data/db` 目录中(配置相关存储到 `/data/configdb` 目录中，不详细介绍)。
 
-在默认情况下 Mongo 中的数据相关存储到 `/data/db` 目录中(配置相关存储到 `/data/configdb` 目录中，不详细介绍)。下面我们将通过各种方案进行相关数据的持久化。
-
-为了方便演示，我们直接使用 `docker-compose.yml` 来启动 Container。您需要使用以下命令启动文件:
+为了方便演示，我们直接使用 `docker-compose.yml` 来运行服务。您需要使用以下命令启动文件:
 ```
 > docker-compose up -d
 ```
-Container 启动成功后，我们可以使用下面命令在启动成功的 Mongo Container 内创造一些数据便于后续方案对比：
+容器启动成功后，我们可以使用下面命令在 Mongo 服务内创造一些数据便于后续进行测试：
 ```
 # 查询所有容器
 > docker ps -a
@@ -41,9 +39,7 @@ Container 启动成功后，我们可以使用下面命令在启动成功的 Mon
 ## 数据卷
 Docker Volume 简称为数据卷。数据卷是 Docker 引擎维护的存储方式，可以使用 `docker volume create` 命令创建，并且支持多种存储驱动，默认的驱动为 `local`，也就是本地卷驱动，如果需要修改可以使用 `-d` 来指定。
 ### 匿名卷
-匿名卷顾名思义就是"没有名称"的数据卷，我们在运行或构建容器时不指定卷名直接使用，都会产生匿名数据卷。
-
-例如，如果我们运行以下 `docker-compose.yml` 文件，将创建一个匿名卷，之后重新启动容器，数据依旧可见，但在我们移除容器后数据就不存在了。此外，其他容器也无法访问它。
+如果我们运行以下 `docker-compose.yml` 文件，将创建一个匿名卷，之后重新启动容器，数据依旧可见，但在我们移除容器后数据就不存在了。此外，其他容器也无法访问它。
 ```
 version: "3"
 
@@ -56,21 +52,144 @@ services:
     volumes:
       - /data/db
 ```
-容器启动成功后，输入下面的命令：
+如你所见，我们不必指定主机目录，只需要指定容器内的目录。
+
+当容器启动成功后，我们可以使用指定命令查询数据卷与检查容器:
 ```
 # 查询所有数据卷
 > docker volume ls
 DRIVER    VOLUME NAME
 local     3d573bed965e02bbc8e75652131962fa6b0fce1fc5926efe1285c1a7b0e101ac
 local     8eeab5fb2363cb8b14f6c5e22d6574575441738621f0d244f1f0c0d6cf230022
+
+# 检查容器
+> docker inspect CONTAINER-ID
+.
+.
+.
+Mounts: [
+  {
+    "Type": "volume",
+    "Name": "8eeab5fb2363cb8b14f6c5e22d6574575441738621f0d244f1f0c0d6cf230022",
+    "Source": "/var/lib/docker/volumes/8eeab5fb2363cb8b14f6c5e22d6574575441738621f0d244f1f0c0d6cf230022/_data",
+    "Destination": "/data/configdb",
+    "Driver": "local",
+    "Mode": "",
+    "RW": true,
+    "Propagation": ""
+  }, {
+    "Type": "volume",
+    "Name": "f32a4ac104e652dc47549b55d87e0e932b31677171083d359460090618721e09",
+    "Source": "/var/lib/docker/volumes/f32a4ac104e652dc47549b55d87e0e932b31677171083d359460090618721e09/_data",
+    "Destination": "/data/db",
+    "Driver": "local",
+    "Mode": "z",
+    "RW": true,
+    "Propagation": ""
+  }
+]
+.
+.
+.
 ```
-可以看出其创建了两个数据卷，而卷的名称是随机生成的，这些卷便可以称之为匿名卷。
+可以看出容器启动成功后，虽然在 `docker-compose.yml` 只指定了一个数据卷，但为什么查询出了两个？
 
-那么我们便碰到了新问题，我们在 `docker-compose.yml` 只创建了一个数据卷，为什么查询出了两个？
+这其实和 Docker 最佳实践要求有关：**容器运行时应该尽量保持容器存储层不发生写操作**，容器所产生的数据文件应该保存于卷中。而为了防止用户没有正确的挂载卷，在使用 Dockerfile 构件镜像时，我们可以事先指定某些目录挂载为匿名卷，这样在运行时如果用户不指定挂载，其应用也可以正常运行，不会向容器存储层写入大量数据。之后在运行时使用 `docker run` 中的 `-v` 参数或者 `docker-compose.yml` 中的 `volumes` 覆盖。这样就出现了上面情况，Mongo Container 默认提供了两个匿名数据卷，让用户运行时覆盖，若不覆盖便会产生默认的匿名卷。
 
-这其实和 Docker 最佳实践要求有关，**容器运行时应该尽量保持容器存储层不发生写操作**，容器所产生的数据文件应该保存于卷中。而为了防止用户没有正确的挂载卷，在使用 Dockerfile 构件镜像时，我们可以事先指定某些目录挂载为匿名卷，这样在运行时如果用户不指定挂载，其应用也可以正常运行，不会向容器存储层写入大量数据。之后在运行时使用 `docker run` 中的 `-v` 参数或者 `docker-compose.yml` 中的 `volumes` 覆盖。这样就出现了上面情况，Mongo Container 默认提供了两个匿名数据卷，让用户运行时覆盖，若不覆盖便会产生默认的匿名卷。
-
-通过这种方式极容易造成 Docker 内存不足的问题，这是由于我们在删除容器时，匿名卷是不会删除的，即使我们使用 `docker rm -v CONTAINER-ID` 删除容器，卷依旧会存在，并且下次启动时，会重新创建数据卷。
-
+通过这种方式极容易造成 Docker 内存不足的问题，这是由于我们在删除容器时，匿名卷是不会删除的，即使我们使用 `docker rm -v CONTAINER-ID` 命令删除容器，卷依旧会存在，只是变成一个悬空卷，我们可以使用以下命令列出和删除所有悬空卷:
+```
+docker volume ls -qf dangling=true 
+docker volume rm $(docker volume ls -qf dangling=true)
+```
 由于匿名卷的这些特性，其只存放无关紧要的临时数据，随着容器消亡，这些数据将失去存在的意义。比如在前端开发中常见的 **node_modules** 便可以通过这种方式存储。
 ### 命名卷
+如果我们需要数据能被被其他容器访问，并且需要删除容器重新启动后继续使用，那么我们这样写 `docker-compose.yml`:
+```
+version: "3"
+
+services:
+  mongo:
+    image: mongo:5.0.3
+    restart: always
+    ports:
+      - 27018:8081
+    volumes:
+      - db_data:/data/db
+volumes:
+  db_data:
+```
+这里第一个字段是主机上卷的唯一名称，第二部分是容器中的路径。
+
+启动成功后，可以检查所有的卷的情况:
+```
+# 查询所有数据卷
+> docker volume ls
+DRIVER    VOLUME NAME
+local     35b2fb6da2baf808666099fe8403d3fd1129cfab59c8f3b411a52300c48266c6
+local     volumes_db_data
+```
+在上面已经解释了为什么会有两个卷，除此之外卷 `volumes_db_data` 的名称并不是自动生成的，而是和容器名结合形成的，并且在用过一次后，以后挂载容器的时候还可以继续使用，并不会重新创建。所以一般需要保存的数据使用命名卷保存
+
+## 目录挂载
+目录挂载用一句话概括就是：将宿主目录绑定到容器中的某个目录位置。这样做的好处就是容器可以直接访问宿主目录的文件。
+
+比如我们在运行一个这样的 `docker-compose.yml` 文件:
+```
+version: "3"
+
+services:
+  mongo:
+    image: mongo:5.0.3
+    restart: always
+    ports:
+      - 27018:8081
+    volumes:
+      - /usr/local/mongo:/data/db
+```
+这里就直接将一个宿主文件夹挂载到了容器中，其中第一部分 `/usr/local/mongo` 是主机中的路径，第二部分 `/data/db` 是容器中的路径。
+### 命令
+由于卷都是统一由 Docker 管理，所以其也为我们提供了一系列命令，便于我们管理:
+```
+> docker volume --help
+
+Commands:
+  create      Create a volume
+  inspect     Display detailed information on one or more volumes
+  ls          List volumes
+  prune       Remove all unused local volumes
+  rm          Remove one or more volumes
+```
+我们可以使用相应命令创建匿名卷和命名卷:
+```
+# 创建一个卷
+> docker volume create test-vol
+
+# 检查卷
+> docker inspect test-vol
+# [ 
+  # {
+    # "CreatedAt": "2021-07-17T07:23:25Z",
+    # "Driver": "local",
+    # "Labels": {},
+    # "Mountpoint ": "/var/lib/docker/volumes/test-vol/_data",
+    # "Name": "test-vol",
+    # "Options": {},
+    # "Scope": "local"
+  # } 
+# ]
+
+# 列出所有卷
+> docker volume ls
+# DRIVER VOLUME NAME
+# local test-vol
+
+# 删除所有卷
+> docker volume prune
+
+# 删除指定卷
+docker volume rm test-vol
+```
+## 卷和目录挂载的区别
+卷是受控存储，是由 Docker 引擎进行管理维护的，因此使用卷你可以不必担心任何权限等类型的各种问题，Docker 引擎在建立卷时会自动添加安全规则，以及根据挂载点调整权限。并且可以统一列表、添加、删除。另外，除了本地卷外，还支持网络卷、分布式卷。
+
+而挂载目录就不属于 Docker 管理了，属于用户自行维护。你就必须手动处理所有权限问题，如果您系统是 Linux、Mac 可能会经常碰到 Permission Denied，这便是由于目录只是挂到容器上而已，并不属于 Docker 管理。
