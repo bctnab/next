@@ -22,7 +22,7 @@ const Footer = () => {
           </Top>
           <DesktopOnly>
             <Copyright>
-              © 2021-present bplink66. All Rights Reserved.
+            网站备案号：<a href="https://beian.miit.gov.cn/" target="_blank">豫ICP备20013287号-2</a>
             </Copyright>
           </DesktopOnly>
         </Left>

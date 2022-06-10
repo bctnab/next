@@ -1,12 +1,65 @@
 ---
-title: VSCode 远程容器连接
+title: VSCode 搭建云端开发环境
 categorie: 技术向
 date: '2022-04-20 14:20:02'
 slug: vscode-containers
-abstract: VSCode 作为前端开发常用的工具，基本可以满足所有开发者的需求。并且也提供了一系列的插件，方便提升开发者的工作效率，下面文章便分享一款由微软发布的插件 "Remote-Development"。
+abstract: 远程开发的模式并不新鲜。大学时我便尝试过，通过 SFTP 或 FTP 连接服务器进行开发。但是这种方式不仅成本高，对网络依赖也很大，并且多人同时使用的时候可能产生版本依赖的冲突。而随着容器技术的发展，通过容器技术可以有效的将不同的开发环境进行区隔，并且以容器为单位，进行复制、迁移变得前所未有的简单。
 isPublished: true
 isPopular: true
 preview: https://img.bplink66.com/uploads/2022/04/625fb1c67b92d.jpeg
 tags:
   - Docker
 ---
+
+## 特点
+我们大费周折的配置这么多东西，那么云端开发有什么优点值得我们去使用呢？
+1. 避免对本机环境的污染。如果是普通的开发方式，我们使用任何技术都需要配置相关环境变量比如(JDK、Nod、Mysql)。这无异对本地环境的一种污染。
+2. 方便迁移和管理。由于我们代码都放置在各个容器中，复制、迁移代码只需操作容器即可，这样就杜绝了外界环境对代码的影响。
+3. 降低开发机的负载。
+
+## Remote-Developement 插件组
+微软曾在 VSCode 上发布了 3 个插件：
+1. `Remote-SSH`：通过 SSH 连接远程服务器。
+2. `Remote-Containers`：连接 Docker 容器。
+3. `Remote-WSL`：连接到 "[Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/)"
+
+大家选择自己需要的，下文主要以 `Remote-Containers` 为主。
+
+## 准备 Docker 环境
+> 由于本人系统为 MAC，如果系统不同，请结合开发环境修改。
+
+Docker 作为常用的容器化部署技术，其主要通过将可执行代码构建为镜像，镜像的运行会生成相关容器，依此实现了项目的容器化。更详细的就不介绍了，毕竟它不是本篇文章的主角，感兴趣可以去 [docs.docker.com](https://docs.docker.com/engine/) 查看。
+
+但是现在看来 Docker 和 VSCode云端开发 并没有太大关联，那么我们为什么要费力不讨好呢？下文将给你答案。
+
+简单列出前端开发中常见的 docker-compose.yml 片段:
+```
+...
+nodejs:
+  build:
+    context: ./node
+  restart: always
+  ports:
+    - 3000:3000
+  volumes:
+    - ./node:/usr/src/app
+    - node_modules:/usr/src/app/node_modules
+...
+```
+这里的 `./node` 作为主要的开发代码，我们将其映射到 Docker 镜像的工作区间中，这样能确保 Docker 容器内的服务能够正常热加载。看似没有什么问题，但在本地开发中由于我们依赖 `node_modules` 都在 Docker 中管理，VSCode 便检查不到依赖，所以我们代码都会出现错误。
+
+![](https://img.bplink66.com/uploads/2022/04/62615ff79a6e4.png)
+
+既然这样我们便需要一些解决办法了，解决的方式有两种：
+1. ~~不用 VSCode。解决不了问题，就解决提出问题的人~~。
+2. 远程连接 Docker 容器，在容器内开发。
+
+结合各种情况，第 2 种方案比较靠谱，由于我们依赖都在 Docker 容器内，所以不会出现这样的问题。那么该怎么连接呢？
+
+> 由于项目由 `docker-compose.yml` 方式运行，如果不是，步骤可能有所不同。
+
+### 1. 安装依赖
+搜索插件 `Remote-Containers` 并安装。
+
+![Remote-Containers](https://img.bplink66.com/uploads/2022/04/62616342b558c.png)
+
